@@ -1,3 +1,9 @@
+## v0.3.1 (2026-11-03)
+
+### Fix
+
+- download the pinned tag instead of cloning it, atomically
+
 ## v0.3.0 (2026-11-03)
 
 ### Feat
