@@ -1,0 +1,17 @@
+{
+  "name": "pen-sync",
+  "metadata": {
+    "description": "Keep a pen.dev (Pencil) design-system file in step with a React component library, both ways."
+  },
+  "owner": {
+    "name": "Jeff Hodges",
+    "url": "https://github.com/jhodges10"
+  },
+  "plugins": [
+    {
+      "name": "pen-sync",
+      "source": "./",
+      "description": "Mirror a React component library into a pen.dev design-system file: Storybook variant matrices pushed through the pen.dev CLI as token-bound reusable components, polished against the code, and designers' library edits diffed back into code changes."
+    }
+  ]
+}

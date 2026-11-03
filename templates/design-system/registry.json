@@ -1,0 +1,6 @@
+{
+  "$schema": "./registry.schema.json",
+  "components": [],
+  "exempt": [],
+  "retired": []
+}

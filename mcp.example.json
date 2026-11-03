@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "storybook": {
+      "type": "http",
+      "url": "http://localhost:${PORT_STORYBOOK:-6006}/mcp"
+    },
+    "pencil": {
+      "transport": "stdio",
+      "command": "/Applications/Pen.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64",
+      "args": ["--app", "desktop"],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Design-system registry",
+  "description": "Every shared component's persistent id, atomic level and source file. The id is stamped on the component's DOM as data-ds and on its Pencil node as metadata.id.",
+  "type": "object",
+  "required": ["components", "exempt", "retired"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "level", "file"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Persistent kebab-case id. Never rename or reuse one; move a removed id to `retired`.",
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+          },
+          "name": {
+            "description": "PascalCase story leaf, as Storybook titles it (Design System/<Level>/<name>).",
+            "type": "string",
+            "pattern": "^[A-Z][A-Za-z0-9]*$"
+          },
+          "level": { "enum": ["atom", "molecule", "organism", "template"] },
+          "file": {
+            "description": "Source file, relative to packages/components.",
+            "type": "string"
+          },
+          "stories": {
+            "description": "Extra story leaves that document this component and share its level.",
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" }
+          },
+          "selector": {
+            "description": "Only for components whose DOM cannot carry data-ds (third-party roots): the CSS selector that finds them instead.",
+            "type": "string"
+          },
+          "export": {
+            "description": "The export that renders the data-ds element, when it isn't `name` (the popup for overlays, the trigger for Select). Its props are the component's variant axes.",
+            "type": "string",
+            "pattern": "^[A-Z][A-Za-z0-9]*$"
+          }
+        }
+      }
+    },
+    "exempt": {
+      "description": "Component files with nothing to mirror (providers, effects).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "file": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "retired": {
+      "description": "Ids that once existed. They are never reused.",
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

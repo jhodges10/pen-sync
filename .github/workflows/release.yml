@@ -1,0 +1,74 @@
+name: release
+
+# Conventional-commit-driven semver. On every push to main, the tests run, then
+# commitizen reads the commits since the last vX.Y.Z tag, computes the increment
+# (fix→patch, feat→minor; pre-1.0, BREAKING CHANGE / feat!→minor), bumps
+# .claude-plugin/plugin.json and package.json, updates the changelog, tags the
+# release, and cuts a GitHub Release. Pushes with no eligible commits
+# (chore/docs/ci/etc. only) are a clean no-op.
+
+on:
+  push:
+    branches: [main]
+
+# Never let two releases race; also skip the bot's own "bump:" commit.
+concurrency: release
+permissions:
+  contents: write
+
+jobs:
+  test:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    uses: ./.github/workflows/test.yml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --quiet commitizen
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version & changelog
+        id: bump
+        run: |
+          set +e
+          cz bump --yes --changelog --changelog-to-stdout > release-notes.md 2> bump.log
+          code=$?
+          set -e
+          cat bump.log
+          if [ "$code" -eq 0 ]; then
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+            echo "version=$(cz version --project)" >> "$GITHUB_OUTPUT"
+          elif [ "$code" -eq 21 ] || [ "$code" -eq 3 ]; then
+            # 21 = NoneIncrementExit (only chore/docs/etc.), 3 = NoCommitsFoundError
+            echo "No release-worthy commits since the last tag; skipping."
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "cz bump failed with exit code $code"
+            exit "$code"
+          fi
+
+      - name: Push commit & tag
+        if: steps.bump.outputs.bumped == 'true'
+        run: git push --follow-tags origin HEAD:main
+
+      - name: Create GitHub Release
+        if: steps.bump.outputs.bumped == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.version }}
+          name: v${{ steps.bump.outputs.version }}
+          body_path: release-notes.md

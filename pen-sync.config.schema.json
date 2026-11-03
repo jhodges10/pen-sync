@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pen-sync.config.json",
+  "description": "Where the pen-sync scripts find a repo's component package, registry, Storybook, tokens and Pencil file, and how its themes switch. Every key is optional; `init.mjs` writes a starting file.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "package": {
+      "type": "string",
+      "description": "The component package, relative to the repo root.",
+      "default": "."
+    },
+    "packageName": {
+      "type": ["string", "null"],
+      "description": "The package's import name, so `@scope/pkg/…` imports count toward a component's source hash.",
+      "default": null
+    },
+    "registry": {
+      "type": "string",
+      "description": "The design-system registry (ids, levels, files), relative to `package`.",
+      "default": "src/design-system/registry.json"
+    },
+    "variants": {
+      "type": "string",
+      "description": "The generated variant axes, relative to `package`.",
+      "default": "src/design-system/variants.json"
+    },
+    "storybook": {
+      "type": "string",
+      "description": "The running Storybook the exports render.",
+      "default": "http://localhost:6006"
+    },
+    "playwright": {
+      "type": "string",
+      "description": "A package.json, relative to the repo root, whose dependencies include `playwright`.",
+      "default": "package.json"
+    },
+    "pen": {
+      "type": "string",
+      "description": "The Pencil design-system file, relative to the repo root.",
+      "default": "design/design-system.lib.pen"
+    },
+    "library": {
+      "type": "string",
+      "description": "The library reference `pen-library.mjs` writes for agents designing in Pencil, relative to the repo root.",
+      "default": "design/design-system.library.md"
+    },
+    "tokens": {
+      "type": "string",
+      "description": "The resolved design tokens (DTCG JSON) `export-tokens.mjs` writes, relative to the repo root.",
+      "default": "design/tokens.json"
+    },
+    "tokenSource": {
+      "type": "string",
+      "description": "The token stylesheet the token export resolves per theme, relative to `package`.",
+      "default": "src/styles/tokens.css"
+    },
+    "docgen": {
+      "type": ["string", "null"],
+      "description": "A module, relative to the repo root, exporting `createDocgenSession({ cwd })` that `variants.mjs` reads prop types through. Null uses the bundled one, on the repo's TypeScript 5 or 6 (`PEN_SYNC_TYPESCRIPT` points at another install).",
+      "default": null
+    },
+    "polishDir": {
+      "type": "string",
+      "description": "Where polish passes write their PNGs.",
+      "default": "<os tmpdir>/pen-sync-polish"
+    },
+    "penCommand": {
+      "type": "string",
+      "description": "The pen.dev CLI command (`PEN_SYNC_PEN` overrides it, e.g. `bunx @pen.dev/cli@0.3.14` in CI).",
+      "default": "pen"
+    },
+    "usage": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Folders, relative to the repo root, `variant-usage.mjs` counts variant uses in.",
+      "default": ["apps", "src"]
+    },
+    "metadataPrefix": {
+      "type": "string",
+      "description": "The `metadata.type` on the nodes the sync writes: `<prefix>` on components, `<prefix>-section` on sections, `<prefix>-slot` on level boards. Never change it on an existing file.",
+      "default": "ds"
+    },
+    "aliasOrder": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Regex sources for token families, tried in order when a paint matches several tokens and no class names one. Semantic surfaces first, special-purpose families last.",
+      "default": [
+        "^--color-(background|foreground|card|popover|primary|secondary|muted|accent|border|input|ring|destructive)(-|$)"
+      ]
+    },
+    "chrome": {
+      "type": "object",
+      "description": "The variables a component's section card in Pencil is drawn with.",
+      "additionalProperties": false,
+      "properties": {
+        "fill": { "type": "string", "default": "--color-card" },
+        "stroke": { "type": "string", "default": "--color-border" },
+        "heading": { "type": "string", "default": "--color-foreground" },
+        "muted": { "type": "string", "default": "--color-muted-foreground" },
+        "radius": { "type": "string", "default": "--radius-xl" },
+        "fontSans": { "type": "string", "default": "--font-sans" },
+        "fontMono": { "type": "string", "default": "--font-mono" },
+        "brand": {
+          "type": "string",
+          "description": "The fill of a matrix row with `surface: \"brand\"`.",
+          "default": "--color-primary"
+        }
+      }
+    },
+    "themes": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Every theme the tokens resolve under; the first is the default. Each is one Pencil theme (a value per axis), how Storybook renders a story in it, and how <html> switches the token CSS to it.",
+      "items": {
+        "type": "object",
+        "required": ["key", "pencil", "html"],
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The theme's name in the tokens file and polish output, e.g. `dark` or `dark/brand-b`."
+          },
+          "pencil": {
+            "type": "object",
+            "description": "Its Pencil theme: one value per theme axis, e.g. `{ \"mode\": \"dark\" }`. Every theme sets the same axes.",
+            "additionalProperties": { "type": "string" }
+          },
+          "storybook": {
+            "type": ["object", "null"],
+            "description": "The Storybook globals that render a story in it (`?globals=theme:dark`). Null for a theme only the tokens have.",
+            "additionalProperties": { "type": "string" }
+          },
+          "html": {
+            "type": "object",
+            "description": "Attributes on <html> that switch the token CSS to it (`{ \"class\": \"dark\" }`). Also how an export tells the theme has applied.",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "default": [
+        { "key": "light", "pencil": { "mode": "light" }, "storybook": { "theme": "light" }, "html": {} },
+        { "key": "dark", "pencil": { "mode": "dark" }, "storybook": { "theme": "dark" }, "html": { "class": "dark" } }
+      ]
+    }
+  }
+}

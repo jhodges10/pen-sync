@@ -1,0 +1,16 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver"
+version_provider = "scm"
+# Pre-1.0: a breaking change bumps the minor, not the major.
+major_version_zero = true
+update_changelog_on_bump = true
+changelog_merge_prerelease = true
+# The git tag is the source of truth; mirror the resolved version into the
+# plugin manifest (what Claude Code's marketplace reads) and package.json (what
+# `github:jhodges10/pen-sync#vX.Y.Z` installs report).
+version_files = [
+  '.claude-plugin/plugin.json:"version"',
+  'package.json:"version"',
+]

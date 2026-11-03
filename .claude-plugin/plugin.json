@@ -1,0 +1,21 @@
+{
+  "name": "pen-sync",
+  "displayName": "pen-sync",
+  "version": "0.2.0",
+  "description": "Keep a pen.dev (Pencil) design-system file in step with a React component library: Storybook variant matrices pushed through the pen.dev CLI as token-bound reusable components, polished against the code, and designers' edits diffed back into code changes.",
+  "author": {
+    "name": "Jeff Hodges",
+    "url": "https://github.com/jhodges10"
+  },
+  "license": "MIT",
+  "keywords": [
+    "design-system",
+    "pencil",
+    "pen.dev",
+    "storybook",
+    "tokens",
+    "figma-alternative"
+  ],
+  "homepage": "https://github.com/jhodges10/pen-sync",
+  "repository": "https://github.com/jhodges10/pen-sync"
+}

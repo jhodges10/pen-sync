@@ -1,0 +1,46 @@
+name: commit-lint
+
+# Keep bumps consistent: every commit must be a valid Conventional Commit so the
+# release job can classify it. Non-conforming messages fail here, not silently
+# at release time (where they'd produce no version bump). First-parent commits
+# only, so a merge is judged by its own summary.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --quiet commitizen
+
+      - name: Check commit messages
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          rc=0
+          msg="$(mktemp)"
+          for sha in $(git rev-list --first-parent "$BASE..$HEAD"); do
+            git log -1 --format=%B "$sha" > "$msg"
+            if cz check --commit-msg-file "$msg"; then
+              echo "ok   $(git log -1 --format='%h %s' "$sha")"
+            else
+              echo "FAIL $(git log -1 --format='%h %s' "$sha")"
+              rc=1
+            fi
+          done
+          exit "$rc"
