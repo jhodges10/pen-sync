@@ -34,7 +34,7 @@ const SOURCE = join(packageRoot, config.tokenSource);
 const { chromium } = createRequire(join(repo, config.playwright))("playwright");
 
 /** Runs in the page: classify and resolve every token under the current theme. */
-function resolveInPage({ names, roles }) {
+function resolveInPage({ names, roles, classes }) {
   const root = document.documentElement;
   const rootStyle = getComputedStyle(root);
   const probe = document.getElementById("probe");
@@ -107,7 +107,7 @@ function resolveInPage({ names, roles }) {
   const typography = {};
   for (const role of roles) {
     probe.style.cssText = "";
-    probe.className = `type-role-${role}`;
+    probe.className = classes[role];
     const style = getComputedStyle(probe);
     typography[role] = {
       fontFamily: style.fontFamily,
@@ -173,6 +173,9 @@ async function exportTokens() {
   const source = inlineImports(SOURCE);
   const names = exportableNames(source);
   const roles = typographyRoles(source);
+  const classes = Object.fromEntries(
+    roles.map((role) => [role, config.typographyClass.replaceAll("{role}", role)]),
+  );
 
   const browser = await chromium.launch();
   try {
@@ -191,7 +194,7 @@ async function exportTokens() {
         for (const [key, value] of Object.entries(attributes))
           root.setAttribute(key, value);
       }, theme.html);
-      const result = await page.evaluate(resolveInPage, { names, roles });
+      const result = await page.evaluate(resolveInPage, { names, roles, classes });
       for (const [name, token] of Object.entries(result.tokens)) {
         const { type, value, hex, outOfGamut } = normalizeToken(name, token);
         resolved[name] ??= { type, values: {}, outOfGamut: [] };

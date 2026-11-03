@@ -56,6 +56,11 @@
       "description": "The token stylesheet the token export resolves per theme, relative to `package`.",
       "default": "src/styles/tokens.css"
     },
+    "typographyClass": {
+      "type": "string",
+      "description": "The class that applies one typography role (a `--type-<role>-size` set in `tokenSource`), with `{role}` for its name. A Tailwind `@utility` counts as a class.",
+      "default": "type-{role}"
+    },
     "docgen": {
       "type": ["string", "null"],
       "description": "A module, relative to the repo root, exporting `createDocgenSession({ cwd })` that `variants.mjs` reads prop types through. Null uses the bundled one, on the repo's TypeScript 5 or 6 (`PEN_SYNC_TYPESCRIPT` points at another install).",

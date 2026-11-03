@@ -42,6 +42,10 @@ test("turns @theme blocks into :root and drops Tailwind-only statements", () => 
   assert.ok(!css.includes("@import"));
   assert.ok(!css.includes("@custom-variant"));
   assert.equal(css.match(/:root \{/g).length, 2);
+  assert.equal(
+    toPlainCss("@utility type-page {\n  font-size: var(--type-page-size);\n}"),
+    ".type-page {\n  font-size: var(--type-page-size);\n}",
+  );
 });
 
 const SOURCE = `
@@ -92,9 +96,9 @@ test("reads the @theme block that follows a @custom-variant statement", () => {
 test("lists typography roles from their size declarations", () => {
   assert.deepEqual(
     typographyRoles(
-      "--type-title-size: 1px; --type-body-size: 1px; --type-body-weight: 4;",
+      "--type-title-size: 1px; --type-body-size: 1px; --type-body-weight: 4; --type-dialog-title-size: 1px;",
     ),
-    ["body", "title"],
+    ["body", "dialog-title", "title"],
   );
 });
 

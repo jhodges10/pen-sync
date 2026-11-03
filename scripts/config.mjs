@@ -61,6 +61,7 @@ export const DEFAULTS = {
   library: "design/design-system.library.md",
   tokens: "design/tokens.json",
   tokenSource: "src/styles/tokens.css",
+  typographyClass: "type-{role}",
   docgen: null,
   polishDir: join(tmpdir(), "pen-sync-polish"),
   penCommand: "pen",

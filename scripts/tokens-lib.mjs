@@ -42,6 +42,8 @@ export function toPlainCss(css) {
   return css
     .replace(/^@import\s+"[^"]+";\s*$/gm, "")
     .replace(/^@custom-variant[^;]*;\s*$/gm, "")
+    // A Tailwind v4 `@utility` is a plain class to a browser that never ran Tailwind.
+    .replace(/@utility\s+([\w-]+)\s*\{/g, ".$1 {")
     .replace(/@theme(\s+(inline|static|reference))*\s*\{/g, ":root {");
 }
 
@@ -113,7 +115,7 @@ export function exportableNames(sourceCss) {
 export function typographyRoles(sourceCss) {
   return [
     ...new Set(
-      [...sourceCss.matchAll(/--type-([a-z]+)-size\s*:/g)].map((m) => m[1]),
+      [...sourceCss.matchAll(/--type-([a-z][a-z0-9-]*)-size\s*:/g)].map((m) => m[1]),
     ),
   ].sort();
 }
