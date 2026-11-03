@@ -82,7 +82,7 @@ node ~/.claude/plugins/cache/pen-sync/pen-sync/*/scripts/init.mjs --package pack
 
 **Outside Claude Code** (a Makefile, CI, other editors), run the scripts from a checkout of
 the same tag. A small launcher can use Claude Code's install when its version matches the
-pinned `ref` and clone the tag otherwise; [`templates/pen-sync.sh`](templates/pen-sync.sh) is
+pinned `ref` and download the tag otherwise; [`templates/pen-sync.sh`](templates/pen-sync.sh) is
 one to copy into the repo:
 
 ```bash
