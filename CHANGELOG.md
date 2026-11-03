@@ -1,3 +1,9 @@
+## v0.3.0 (2026-11-03)
+
+### Feat
+
+- run straight from Claude Code's plugin cache
+
 ## v0.2.1 (2026-11-03)
 
 ### Fix
