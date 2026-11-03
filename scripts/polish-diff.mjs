@@ -14,9 +14,9 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { config, metaType, repo } from "./config.mjs";
+import { isMain } from "./main.mjs";
 
 /** A variant key as a file name: `disabled&variant=outline` → `disabled__variant-outline`. */
 export const polishName = (key) =>
@@ -199,7 +199,7 @@ export const SIZE_TOLERANCE = 3;
 export const DIFF_TOLERANCE = 12;
 export const INK_TOLERANCE = 0.15;
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const { PNG } = createRequire(join(repo, "package.json"))("pngjs");
   const [id] = process.argv.slice(2);
   if (!id)

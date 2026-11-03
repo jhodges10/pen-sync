@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 
 import { config, repo } from "./config.mjs";
 import { call, openShell, parseResult } from "./pen-sync.mjs";
+import { isMain } from "./main.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -199,7 +200,7 @@ export function diffSection(pencil, exported) {
 
 const show = (v) => (typeof v === "string" ? v : JSON.stringify(v));
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const app = args.includes("--app") ? args[args.indexOf("--app") + 1] : "desktop";
   const ids = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--app");

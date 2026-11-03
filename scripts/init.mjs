@@ -23,6 +23,7 @@ import {
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isMain } from "./main.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const templates = join(here, "..", "templates");
@@ -81,7 +82,7 @@ export const SCAFFOLD = (prefix) => {
   return `for(const b of ${JSON.stringify(boards)})Insert(document,b);Print("boards",${boards.length})`;
 };
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const flag = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
   const repo = process.cwd();

@@ -23,6 +23,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { config, packageRoot, registryPath, repo } from "./config.mjs";
 import { localImports } from "./source-hash.mjs";
+import { isMain } from "./main.mjs";
 
 const REGISTRY = registryPath;
 const OUTPUT = join(packageRoot, config.variants);
@@ -114,7 +115,7 @@ export async function extractVariants(components, root = packageRoot) {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const registry = JSON.parse(readFileSync(REGISTRY, "utf8"));
   const document = {
     $comment:

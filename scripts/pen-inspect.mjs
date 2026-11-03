@@ -13,10 +13,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { config, registryPath, repo } from "./config.mjs";
 import { call, openShell, parseResult } from "./pen-sync.mjs";
+import { isMain } from "./main.mjs";
 
 /** Node ids in `get_app_state`'s "Selected nodes" line. */
 export function selectedIds(appState) {
@@ -52,7 +52,7 @@ export function parseContext(context = "") {
   };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const app = args.includes("--app")
     ? args[args.indexOf("--app") + 1]

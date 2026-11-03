@@ -35,6 +35,7 @@ import { PENCIL_APPLY } from "./dom-to-pen.mjs";
 import { toPencilVariables, toSnippets } from "./pencil-variables.mjs";
 import { pencilExport } from "./polish-diff.mjs";
 import { sourceHash } from "./source-hash.mjs";
+import { isMain } from "./main.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -162,7 +163,7 @@ export function checkInventory(inventory, components, hashOf) {
   return report;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const flag = (name) => {
     const i = args.indexOf(name);

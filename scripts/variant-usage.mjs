@@ -15,9 +15,9 @@
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { config, packageRoot, registryPath, repo } from "./config.mjs";
+import { isMain } from "./main.mjs";
 
 const SOURCE = /\.(tsx|jsx|ts|js)$/;
 const SKIP = /(\.stories|\.test|\.spec)\.[jt]sx?$|\/(node_modules|dist|build|generated|\.storybook)\//;
@@ -159,7 +159,7 @@ export function unusedValues(usage, variants) {
   return out;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const registry = JSON.parse(readFileSync(registryPath, "utf8"));
   const { components: variants } = JSON.parse(

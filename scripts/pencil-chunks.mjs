@@ -22,9 +22,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { repo } from "./config.mjs";
+import { isMain } from "./main.mjs";
 
 // lz-string comes from the repo's own dependencies; the plugin ships no node_modules.
 const require = createRequire(join(repo, "package.json"));
@@ -87,7 +87,7 @@ export function chunks(bodies, size = CHUNK) {
   return { parts, store };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const [out, ...files] = process.argv.slice(2);
   if (out === "--setup") {
     const min = readFileSync(

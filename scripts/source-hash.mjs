@@ -12,9 +12,9 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { config, packageRoot, registryPath } from "./config.mjs";
+import { isMain } from "./main.mjs";
 
 /** Package-local files `file` imports (relative or `<packageName>/…`), sorted. */
 export function localImports(file, root = packageRoot) {
@@ -44,7 +44,7 @@ export function sourceHash(file, root = packageRoot) {
   return hash.digest("hex").slice(0, 12);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const registry = JSON.parse(readFileSync(registryPath, "utf8"));
   const ids = process.argv.slice(2);
   const out = {};

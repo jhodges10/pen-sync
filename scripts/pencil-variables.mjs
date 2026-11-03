@@ -12,9 +12,9 @@
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { EXT } from "./tokens-lib.mjs";
+import { isMain } from "./main.mjs";
 
 /** Tailwind's default spacing scale (`--spacing: 0.25rem`), which the apps use unchanged. */
 const SPACING_STEPS = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 16];
@@ -199,7 +199,7 @@ export function toSnippets(doc, count) {
   });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const { config, repo } = await import("./config.mjs");
   const doc = JSON.parse(readFileSync(join(repo, config.tokens), "utf8"));
   const { variables, skipped } = toPencilVariables(doc);

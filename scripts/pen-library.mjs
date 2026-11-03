@@ -11,10 +11,10 @@
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { config, registryPath, repo } from "./config.mjs";
 import { call, openShell, parseResult } from "./pen-sync.mjs";
+import { isMain } from "./main.mjs";
 
 /**
  * Runs in Pencil: each section's reusable components as
@@ -80,7 +80,7 @@ export function libraryMarkdown({ registry, inventory, slots = {}, tokens, pen, 
   return `${lines.join("\n")}\n`;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   const pen = join(repo, config.pen);
   // Read a copy headless: the reference describes the saved file.
   const copy = join(mkdtempSync(join(tmpdir(), "pen-library-")), "library.pen");
