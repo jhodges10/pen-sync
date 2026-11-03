@@ -1,3 +1,9 @@
+## v0.2.1 (2026-11-03)
+
+### Fix
+
+- run the scripts when installed behind a symlinked node_modules
+
 ## v0.2.0 (2026-11-03)
 
 ### Feat

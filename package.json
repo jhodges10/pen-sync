@@ -1,6 +1,6 @@
 {
   "name": "pen-sync",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Keep a pen.dev (Pencil) design-system file in step with a React component library: Storybook variant matrices pushed through the pen.dev CLI, polished against the code, and design edits diffed back into code.",
   "type": "module",
   "license": "MIT",
