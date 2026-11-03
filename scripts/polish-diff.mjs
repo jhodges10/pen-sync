@@ -12,10 +12,9 @@
  * rows past any threshold are flagged.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { createRequire } from "node:module";
 import { join } from "node:path";
 
-import { config, metaType, repo } from "./config.mjs";
+import { config, metaType } from "./config.mjs";
 import { isMain } from "./main.mjs";
 
 /** A variant key as a file name: `disabled&variant=outline` → `disabled__variant-outline`. */
@@ -200,7 +199,7 @@ export const DIFF_TOLERANCE = 12;
 export const INK_TOLERANCE = 0.15;
 
 if (isMain(import.meta.url)) {
-  const { PNG } = createRequire(join(repo, "package.json"))("pngjs");
+  const { PNG } = (await import("../vendor/pngjs.mjs")).default;
   const [id] = process.argv.slice(2);
   if (!id)
     throw new Error(

@@ -22,13 +22,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { repo } from "./config.mjs";
 import { isMain } from "./main.mjs";
 
-// lz-string comes from the repo's own dependencies; the plugin ships no node_modules.
-const require = createRequire(join(repo, "package.json"));
-const lz = require("lz-string");
+// lz-string is vendored (`bun run vendor`), so the plugin runs from Claude Code's cache.
+const LZ_FILE = fileURLToPath(new URL("../vendor/lz-string.min.cjs", import.meta.url));
+const lz = createRequire(import.meta.url)(LZ_FILE);
 
 /** The 32-bit string hash each chunk checks itself against. */
 export const hash = (s) => {
@@ -91,7 +91,7 @@ if (isMain(import.meta.url)) {
   const [out, ...files] = process.argv.slice(2);
   if (out === "--setup") {
     const min = readFileSync(
-      require.resolve("lz-string/libs/lz-string.min.js"),
+      LZ_FILE,
       "utf8",
     );
     console.log(

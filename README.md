@@ -41,8 +41,9 @@ registry + data-ds ─▶ VariantMatrix story ─▶ export (Chromium, every the
 - **The pen.dev CLI**, logged in: `pen interactive` is how everything reaches Pencil. For CI,
   a CLI key in `PEN_CLI_KEY`, and `PEN_SYNC_PEN="bunx @pen.dev/cli@<version>"` if `pen` isn't
   on the runner's PATH.
-- **Node 22.19+** and, in the repo's own dependencies, **Playwright** (Chromium), `lz-string` and
-  `pngjs`. The plugin ships no `node_modules`.
+- **Node 22.19+** and, in the repo's own dependencies, **Playwright** (Chromium). The plugin's
+  other dependencies (`lz-string`, `pngjs`) are vendored in `vendor/`, so it runs straight from
+  Claude Code's plugin cache.
 - **TypeScript 5 or 6** for the bundled prop-type reader, or your own docgen module
   (`docgen` in the config).
 - Token CSS that switches themes on `<html>` (a class or attribute), e.g. shadcn's `.dark`.
@@ -59,24 +60,33 @@ registry + data-ds ─▶ VariantMatrix story ─▶ export (Chromium, every the
 ```
 
 To have everyone who opens a repo get it, add this to the repo's `.claude/settings.json`;
-contributors are set up once they trust the folder:
+contributors are set up once they trust the folder. `ref` pins the release, so everyone runs
+the same version until you bump it:
 
 ```json
 {
   "extraKnownMarketplaces": {
-    "pen-sync": { "source": { "source": "github", "repo": "jhodges10/pen-sync" } }
+    "pen-sync": {
+      "source": { "source": "github", "repo": "jhodges10/pen-sync", "ref": "v0.3.0" }
+    }
   },
   "enabledPlugins": { "pen-sync@pen-sync": true }
 }
 ```
 
-**The scripts**, for the repo's own Makefile, CI and tests, as a pinned dev dependency (the
-skills call them as `$DS` = `${CLAUDE_PLUGIN_ROOT}/scripts`, or `node_modules/pen-sync/scripts`
-once installed this way):
+The skills call the scripts as `$DS` = `${CLAUDE_PLUGIN_ROOT}/scripts`. Set a repo up with:
 
 ```bash
-bun add -d github:jhodges10/pen-sync#v0.2.0      # or npm i -D, pnpm add -D
-node node_modules/pen-sync/scripts/init.mjs --package packages/ui
+node ~/.claude/plugins/cache/pen-sync/pen-sync/*/scripts/init.mjs --package packages/ui
+```
+
+**Outside Claude Code** (a Makefile, CI, other editors), run the scripts from a checkout of
+the same tag. A small launcher can use Claude Code's install when its version matches the
+pinned `ref` and clone the tag otherwise; [`templates/pen-sync.sh`](templates/pen-sync.sh) is
+one to copy into the repo:
+
+```bash
+scripts/pen-sync variants --check     # = node <plugin>/scripts/variants.mjs --check
 ```
 
 `init` writes `pen-sync.config.json`, copies the React kit into the package and creates the

@@ -12,12 +12,14 @@
     "skills",
     "scripts",
     "templates",
+    "vendor",
     "pen-sync.config.schema.json",
     "mcp.example.json"
   ],
   "scripts": {
     "test": "node --test scripts/*.test.mjs",
-    "validate": "claude plugin validate ."
+    "validate": "claude plugin validate .",
+    "vendor": "cp node_modules/lz-string/libs/lz-string.min.js vendor/lz-string.min.cjs && bun build node_modules/pngjs/lib/png.js --target=node --format=esm --minify --outfile vendor/pngjs.mjs"
   },
   "devDependencies": {
     "lz-string": "1.5.0",

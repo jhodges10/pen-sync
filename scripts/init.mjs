@@ -13,6 +13,7 @@
  */
 import { spawnSync } from "node:child_process";
 import {
+  chmodSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -128,6 +129,15 @@ if (isMain(import.meta.url)) {
     done.push(`copied ${relative(repo, to)}`);
   }
 
+  // The launcher the Makefile and CI run the scripts through (see the README).
+  const launcher = join(repo, "scripts/pen-sync");
+  if (!existsSync(launcher)) {
+    mkdirSync(dirname(launcher), { recursive: true });
+    copyFileSync(join(templates, "pen-sync.sh"), launcher);
+    chmodSync(launcher, 0o755);
+    done.push("copied scripts/pen-sync (pin the release with a ref in .claude/settings.json)");
+  }
+
   // The Pencil file, with a board per level for sections to land in.
   const config = JSON.parse(readFileSync(configFile, "utf8"));
   const pen = join(repo, config.pen ?? "design/design-system.lib.pen");
@@ -152,8 +162,8 @@ Next:
      on, and your Storybook theme globals), tokenSource, storybook.
   2. Register a component in ${relative(repo, join(kit, "registry.json"))}, stamp data-ds="<id>"
      on its root, and add a VariantMatrix story (see the pen-sync skill).
-  3. node ${relative(repo, join(here, "variants.mjs"))}       # prop axes → variants.json
-     node ${relative(repo, join(here, "export-tokens.mjs"))}  # tokens → ${config.tokens}
-     node ${relative(repo, join(here, "pen-sync.mjs"))} --tokens --headless
-     node ${relative(repo, join(here, "pen-sync.mjs"))} --all --headless`);
+  3. scripts/pen-sync variants        # prop axes → variants.json
+     scripts/pen-sync export-tokens   # tokens → ${config.tokens}
+     scripts/pen-sync pen-sync --tokens --headless
+     scripts/pen-sync pen-sync --all --headless`);
 }
