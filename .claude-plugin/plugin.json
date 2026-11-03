@@ -1,7 +1,7 @@
 {
   "name": "pen-sync",
   "displayName": "pen-sync",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Keep a pen.dev (Pencil) design-system file in step with a React component library: Storybook variant matrices pushed through the pen.dev CLI as token-bound reusable components, polished against the code, and designers' edits diffed back into code changes.",
   "author": {
     "name": "Jeff Hodges",

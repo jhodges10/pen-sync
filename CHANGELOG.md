@@ -1,3 +1,9 @@
+## v0.3.2 (2026-11-03)
+
+### Fix
+
+- resolve typography roles applied by Tailwind @utility classes
+
 ## v0.3.1 (2026-11-03)
 
 ### Fix
