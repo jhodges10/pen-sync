@@ -117,6 +117,12 @@ export function openShell(args) {
   const ready = wait();
   return {
     ready,
+    /** What the CLI wrote to stderr since the last call: a failed `execute` reports there. */
+    takeErrors() {
+      const taken = plain(errors).trim();
+      errors = "";
+      return taken;
+    },
     send(line) {
       const reply = wait();
       child.stdin.write(`${line}\n`);
@@ -276,7 +282,7 @@ if (isMain(import.meta.url)) {
         const result = await run(`{${data.trim()}}`, `Sync ${id} from code`);
         if (!result.ok) {
           failed += 1;
-          console.error(`✗ ${id}\n${result.text}`);
+          console.error(`✗ ${id}\n${result.text}${shell.takeErrors()}`);
           continue;
         }
         const summary = JSON.parse(

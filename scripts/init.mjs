@@ -7,6 +7,7 @@
  *   node <plugin>/scripts/init.mjs                         # package at the repo root
  *   node <plugin>/scripts/init.mjs --package packages/ui   # a package in a monorepo
  *   node <plugin>/scripts/init.mjs --no-pen                # skip creating the .pen file
+ *   node <plugin>/scripts/init.mjs --source                # no browser: only the registry, no React kit
  *
  * Run it from the repo root. It reads `components.json` (shadcn) when there is
  * one, for the token stylesheet.
@@ -30,7 +31,22 @@ const here = dirname(fileURLToPath(import.meta.url));
 const templates = join(here, "..", "templates");
 
 /** The config `init` writes: what it could detect, defaults for the rest. */
-export function initialConfig({ pkg, tokenSource, playwright, prefix }) {
+export function initialConfig({ pkg, tokenSource, playwright, prefix, native = false }) {
+  if (native)
+    return {
+      package: pkg,
+      registry: "design-system/registry.json",
+      pen: "design/design-system.lib.pen",
+      library: "design/design-system.library.md",
+      tokens: "design/tokens.json",
+      metadataPrefix: prefix,
+      source: {
+        snapshot: "path/to/your-app --ds-snapshot {id} {theme} {out}",
+        tokens: "path/to/your-app --ds-tokens {theme} {out}",
+        shots: "path/to/your-app --ds-shots {id} {theme} {out}",
+      },
+      themes: [{ key: "dark", pencil: { mode: "dark" }, html: {} }],
+    };
   return {
     package: pkg,
     registry: "src/design-system/registry.json",
@@ -50,13 +66,14 @@ export function initialConfig({ pkg, tokenSource, playwright, prefix }) {
 }
 
 /** Runs in Pencil: a board per level, each with the slot new sections land in. */
-export const SCAFFOLD = (prefix) => {
-  const levels = [
+export const SCAFFOLD = (prefix, custom) => {
+  const levels = custom?.levels ?? [
     ["atom", "Atoms"],
     ["molecule", "Molecules"],
     ["organism", "Organisms"],
     ["template", "Templates"],
   ];
+  const text = custom?.text ? { fill: custom.text } : {};
   const boards = levels.map(([level, title], i) => ({
     type: "frame",
     name: `0${i + 1} · ${title}`,
@@ -66,9 +83,9 @@ export const SCAFFOLD = (prefix) => {
     layout: "vertical",
     gap: 32,
     padding: 64,
-    fill: "#ffffff",
+    fill: custom?.fill ?? "#ffffff",
     children: [
-      { type: "text", name: "Title", content: title, fontSize: 40, fontWeight: "700" },
+      { type: "text", name: "Title", content: title, fontSize: 40, fontWeight: "700", ...text },
       {
         type: "frame",
         name: "Components",
@@ -109,18 +126,22 @@ if (isMain(import.meta.url)) {
 
   const configFile = join(repo, "pen-sync.config.json");
   const prefix = flag("--prefix") ?? "ds";
+  const native = args.includes("--source");
   if (!existsSync(configFile)) {
     writeFileSync(
       configFile,
-      `${JSON.stringify(initialConfig({ pkg, tokenSource, playwright, prefix }), null, 2)}\n`,
+      `${JSON.stringify(initialConfig({ pkg, tokenSource, playwright, prefix, native }), null, 2)}\n`,
     );
     done.push("wrote pen-sync.config.json");
   }
 
   // The React kit, unless the package already has one.
-  const kit = join(pkgRoot, "src/design-system");
+  const kit = native
+    ? dirname(join(pkgRoot, JSON.parse(readFileSync(configFile, "utf8")).registry))
+    : join(pkgRoot, "src/design-system");
   mkdirSync(kit, { recursive: true });
   for (const file of readdirSync(join(templates, "design-system"))) {
+    if (native && !file.startsWith("registry")) continue;
     if (file.startsWith(".") || !statSync(join(templates, "design-system", file)).isFile())
       continue;
     const to = join(kit, file);
@@ -145,7 +166,7 @@ if (isMain(import.meta.url)) {
     mkdirSync(dirname(pen), { recursive: true });
     const [command, ...prefixArgs] = (process.env.PEN_SYNC_PEN ?? "pen").split(" ");
     const run = spawnSync(command, [...prefixArgs, "interactive", "-o", pen], {
-      input: `execute(${JSON.stringify({ input: SCAFFOLD(config.metadataPrefix ?? prefix) })})\nsave()\nexit()\n`,
+      input: `execute(${JSON.stringify({ input: SCAFFOLD(config.metadataPrefix ?? prefix, config.boards) })})\nsave()\nexit()\n`,
       encoding: "utf8",
     });
     if (run.error || run.status !== 0 || !existsSync(pen))
@@ -156,6 +177,16 @@ if (isMain(import.meta.url)) {
   }
 
   for (const line of done) console.log(`✓ ${line}`);
+  if (native) {
+    console.log(`
+Next:
+  1. Point pen-sync.config.json → source at your commands (the README has their JSON shapes).
+  2. Register components in ${relative(repo, join(kit, "registry.json"))}.
+  3. scripts/pen-sync export-tokens
+     scripts/pen-sync pen-sync --tokens --headless
+     scripts/pen-sync pen-sync --all --headless`);
+    process.exit(0);
+  }
   console.log(`
 Next:
   1. Check pen-sync.config.json: themes (the classes or attributes your token CSS switches

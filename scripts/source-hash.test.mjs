@@ -35,3 +35,14 @@ test("hashes a component with the package modules it imports, and changes when e
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("a Zig file's relative @imports count, and a package's don't", () => {
+  const root = mkdtempSync(join(tmpdir(), "pen-sync-zig-"));
+  mkdirSync(join(root, "src"));
+  writeFileSync(join(root, "src/widgets.zig"), 'const a = @import("nanoui");\nconst th = @import("theme.zig");\nconst m = @import("missing.zig");\n');
+  writeFileSync(join(root, "src/theme.zig"), "pub const x = 1;\n");
+  assert.deepEqual(localImports("src/widgets.zig", root), ["src/theme.zig"]);
+  const before = sourceHash("src/widgets.zig", root);
+  writeFileSync(join(root, "src/theme.zig"), "pub const x = 2;\n");
+  assert.notEqual(sourceHash("src/widgets.zig", root), before);
+});

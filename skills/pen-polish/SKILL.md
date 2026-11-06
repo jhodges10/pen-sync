@@ -17,7 +17,10 @@ from the repo root: they find the repo by walking up to `pen-sync.config.json`.
 
 ## Prerequisites
 
-- Storybook running (config `storybook`; don't start a second one; ask).
+- Storybook running (config `storybook`; don't start a second one; ask), or, with `source` in the
+  config, a current build of what its commands run. There, "Storybook shots" are the `shots`
+  command's, and a fix goes in that repo's matrix or exporter; the table's class-name and
+  `data-ds` causes don't apply.
 - The pen.dev CLI (`pen`), logged in, with Pencil open on the design-system file.
 - Scripts that launch Chromium, reach localhost or talk to the CLI run **outside the sandbox**.
 - The section was exported by the current exporter, so each component's `context` ends in a

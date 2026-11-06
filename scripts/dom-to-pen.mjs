@@ -516,11 +516,11 @@ export function variableIndex(
   for (const [name, def] of Object.entries(variables)) {
     if (def.type === "color")
       colors.push({ name, values: perTheme(def.value) });
-    else if (def.type === "number" && name.startsWith("--radius-"))
+    else if (def.type === "number" && /^(--)?radius-/.test(name))
       radii.push([name, perTheme(def.value)[themes[0].key]]);
-    else if (def.type === "number" && name.startsWith("--spacing-"))
+    else if (def.type === "number" && /^(--spacing-|space-)/.test(name))
       spacing.push([name, def.value]);
-    else if (def.type === "string" && name.startsWith("--font-"))
+    else if (def.type === "string" && /^(--)?font-/.test(name))
       fonts[def.value] = name;
   }
   return {
@@ -1218,12 +1218,15 @@ export function codeLink(
   source,
   story,
   root = ".",
+  call,
 ) {
   const props = [...new URLSearchParams(key)]
     .map(([prop, value]) => (value === "" ? ` ${prop}` : ` ${prop}="${value}"`))
     .join("");
   const path = root === "." || !root ? source : `${root}/${source}`;
-  return `<${name}${props} />\n${path}\nStorybook: ${story}\nVariant: ${key || "(default)"}`;
+  // A component called rather than written as JSX (registry `call`) has no story either.
+  const usage = call ? `${call}(${props.trim()})` : `<${name}${props} />`;
+  return `${usage}\n${path}\n${call ? "Matrix" : "Storybook"}: ${story}\nVariant: ${key || "(default)"}`;
 }
 
 /** The variant key a component's `context` records, or null for one exported before it did. */
@@ -1316,6 +1319,7 @@ export function buildExport({
   id,
   name,
   story,
+  call,
   source,
   sourceHash,
   snapshots,
@@ -1364,7 +1368,7 @@ export function buildExport({
       node: {
         ...node,
         name: `${name}/${variantName(instance.key)}`,
-        context: codeLink(name, instance.key, source, story, packagePath),
+        context: codeLink(name, instance.key, source, story, packagePath, call),
         reusable: true,
         metadata: { type: metadataPrefix, id, variant, story, source, sourceHash },
       },

@@ -24,6 +24,13 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { config, packageRoot, registryPath, repo } from "./config.mjs";
 import { localImports } from "./source-hash.mjs";
 import { isMain } from "./main.mjs";
+import { source as commandSource } from "./config.mjs";
+
+// A `source` declares its axes in its own matrix: there are no prop types to read.
+if (commandSource) {
+  console.error("variants: nothing to do; pen-sync.config.json → source declares its own variants");
+  process.exit(0);
+}
 
 const REGISTRY = registryPath;
 const OUTPUT = join(packageRoot, config.variants);

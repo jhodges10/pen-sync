@@ -19,12 +19,12 @@ import {
   packageRoot,
   registryPath,
   repo,
+  source,
   storyThemes,
 } from "./config.mjs";
 import { matrixFile, storiesFile, storyIdSuffix } from "./matrix-files.mjs";
 import { polishName } from "./polish-diff.mjs";
-
-const { chromium } = createRequire(join(repo, config.playwright))("playwright");
+import { runForFiles } from "./source-command.mjs";
 
 const args = process.argv.slice(2);
 const flag = (name) => {
@@ -38,6 +38,18 @@ if (!id || id.startsWith("--"))
   );
 const out = flag("--out") ?? `${config.polishDir}/${id}/storybook`;
 const themeKey = flag("--theme") ?? storyThemes[0].key;
+
+// A `source` command renders the same files itself: one 2× PNG per variant
+// and `storybook.json`, which polish-diff reads whichever made them.
+if (source) {
+  if (!source.shots) throw new Error("pen-sync.config.json: source has no `shots` command");
+  mkdirSync(out, { recursive: true });
+  runForFiles(source.shots, { id, theme: themeKey, out }, repo);
+  console.error(`shots → ${out}`);
+  process.exit(0);
+}
+
+const { chromium } = createRequire(join(repo, config.playwright))("playwright");
 const storybook = (flag("--storybook") ?? config.storybook).replace(/\/$/, "");
 
 const registry = JSON.parse(readFileSync(registryPath, "utf8"));

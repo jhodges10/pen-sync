@@ -19,6 +19,11 @@ import { join, relative } from "node:path";
 import { config, packageRoot, registryPath, repo } from "./config.mjs";
 import { isMain } from "./main.mjs";
 
+if (config.source) {
+  console.error("variant-usage reads JSX; it does not apply to pen-sync.config.json → source");
+  process.exit(1);
+}
+
 const SOURCE = /\.(tsx|jsx|ts|js)$/;
 const SKIP = /(\.stories|\.test|\.spec)\.[jt]sx?$|\/(node_modules|dist|build|generated|\.storybook)\//;
 

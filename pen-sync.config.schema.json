@@ -5,14 +5,19 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
     "package": {
       "type": "string",
       "description": "The component package, relative to the repo root.",
       "default": "."
     },
     "packageName": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "The package's import name, so `@scope/pkg/…` imports count toward a component's source hash.",
       "default": null
     },
@@ -62,9 +67,71 @@
       "default": "type-{role}"
     },
     "docgen": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "A module, relative to the repo root, exporting `createDocgenSession({ cwd })` that `variants.mjs` reads prop types through. Null uses the bundled one, on the repo's TypeScript 5 or 6 (`PEN_SYNC_TYPESCRIPT` points at another install).",
       "default": null
+    },
+    "source": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Commands that stand in for Storybook and Chromium, for components that don't render in a browser. Each runs from the repo root without a shell and writes to its `{out}`. Null renders stories.",
+      "default": null,
+      "required": [
+        "snapshot",
+        "tokens"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "snapshot": {
+          "type": "string",
+          "description": "Writes one component under one theme to `{out}` as JSON: `{ instances: [{ key, row, tree }], matrix: { rows, slots }, surfaces }`, trees as `snapshotMatrix` records them. Holes: {id} {theme} {out}."
+        },
+        "tokens": {
+          "type": "string",
+          "description": "Writes one theme's resolved tokens to `{out}` as JSON: `{ tokens: { name: { type, value } }, typography }`. Holes: {theme} {out}."
+        },
+        "shots": {
+          "type": "string",
+          "description": "Writes one 2x PNG per variant into the folder `{out}`, and `storybook.json` listing them, for pen-polish. Holes: {id} {theme} {out}."
+        }
+      }
+    },
+    "boards": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "default": null,
+      "description": "The boards `init.mjs` creates, instead of one per atomic level.",
+      "additionalProperties": false,
+      "properties": {
+        "levels": {
+          "type": "array",
+          "description": "`[level, title]` pairs. A registry entry's `level` and a `pen-import` entry's choose among them.",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "fill": {
+          "type": "string",
+          "description": "The boards' background.",
+          "default": "#ffffff"
+        },
+        "text": {
+          "type": "string",
+          "description": "Their titles' color."
+        }
+      }
     },
     "polishDir": {
       "type": "string",
@@ -78,9 +145,14 @@
     },
     "usage": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Folders, relative to the repo root, `variant-usage.mjs` counts variant uses in.",
-      "default": ["apps", "src"]
+      "default": [
+        "apps",
+        "src"
+      ]
     },
     "metadataPrefix": {
       "type": "string",
@@ -89,7 +161,9 @@
     },
     "aliasOrder": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "Regex sources for token families, tried in order when a paint matches several tokens and no class names one. Semantic surfaces first, special-purpose families last.",
       "default": [
         "^--color-(background|foreground|card|popover|primary|secondary|muted|accent|border|input|ring|destructive)(-|$)"
@@ -100,13 +174,34 @@
       "description": "The variables a component's section card in Pencil is drawn with.",
       "additionalProperties": false,
       "properties": {
-        "fill": { "type": "string", "default": "--color-card" },
-        "stroke": { "type": "string", "default": "--color-border" },
-        "heading": { "type": "string", "default": "--color-foreground" },
-        "muted": { "type": "string", "default": "--color-muted-foreground" },
-        "radius": { "type": "string", "default": "--radius-xl" },
-        "fontSans": { "type": "string", "default": "--font-sans" },
-        "fontMono": { "type": "string", "default": "--font-mono" },
+        "fill": {
+          "type": "string",
+          "default": "--color-card"
+        },
+        "stroke": {
+          "type": "string",
+          "default": "--color-border"
+        },
+        "heading": {
+          "type": "string",
+          "default": "--color-foreground"
+        },
+        "muted": {
+          "type": "string",
+          "default": "--color-muted-foreground"
+        },
+        "radius": {
+          "type": "string",
+          "default": "--radius-xl"
+        },
+        "fontSans": {
+          "type": "string",
+          "default": "--font-sans"
+        },
+        "fontMono": {
+          "type": "string",
+          "default": "--font-mono"
+        },
         "brand": {
           "type": "string",
           "description": "The fill of a matrix row with `surface: \"brand\"`.",
@@ -120,7 +215,10 @@
       "description": "Every theme the tokens resolve under; the first is the default. Each is one Pencil theme (a value per axis), how Storybook renders a story in it, and how <html> switches the token CSS to it.",
       "items": {
         "type": "object",
-        "required": ["key", "pencil", "html"],
+        "required": [
+          "key",
+          "pencil"
+        ],
         "additionalProperties": false,
         "properties": {
           "key": {
@@ -130,23 +228,52 @@
           "pencil": {
             "type": "object",
             "description": "Its Pencil theme: one value per theme axis, e.g. `{ \"mode\": \"dark\" }`. Every theme sets the same axes.",
-            "additionalProperties": { "type": "string" }
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "storybook": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "The Storybook globals that render a story in it (`?globals=theme:dark`). Null for a theme only the tokens have.",
-            "additionalProperties": { "type": "string" }
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "html": {
             "type": "object",
             "description": "Attributes on <html> that switch the token CSS to it (`{ \"class\": \"dark\" }`). Also how an export tells the theme has applied.",
-            "additionalProperties": { "type": "string" }
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
       "default": [
-        { "key": "light", "pencil": { "mode": "light" }, "storybook": { "theme": "light" }, "html": {} },
-        { "key": "dark", "pencil": { "mode": "dark" }, "storybook": { "theme": "dark" }, "html": { "class": "dark" } }
+        {
+          "key": "light",
+          "pencil": {
+            "mode": "light"
+          },
+          "storybook": {
+            "theme": "light"
+          },
+          "html": {}
+        },
+        {
+          "key": "dark",
+          "pencil": {
+            "mode": "dark"
+          },
+          "storybook": {
+            "theme": "dark"
+          },
+          "html": {
+            "class": "dark"
+          }
+        }
       ]
     }
   }
