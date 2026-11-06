@@ -64,6 +64,7 @@ export const DEFAULTS = {
   typographyClass: "type-{role}",
   docgen: null,
   source: null,
+  boards: null,
   polishDir: join(tmpdir(), "pen-sync-polish"),
   penCommand: "pen",
   usage: ["apps", "src"],

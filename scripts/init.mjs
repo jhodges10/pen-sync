@@ -66,13 +66,14 @@ export function initialConfig({ pkg, tokenSource, playwright, prefix, native = f
 }
 
 /** Runs in Pencil: a board per level, each with the slot new sections land in. */
-export const SCAFFOLD = (prefix) => {
-  const levels = [
+export const SCAFFOLD = (prefix, custom) => {
+  const levels = custom?.levels ?? [
     ["atom", "Atoms"],
     ["molecule", "Molecules"],
     ["organism", "Organisms"],
     ["template", "Templates"],
   ];
+  const text = custom?.text ? { fill: custom.text } : {};
   const boards = levels.map(([level, title], i) => ({
     type: "frame",
     name: `0${i + 1} · ${title}`,
@@ -82,9 +83,9 @@ export const SCAFFOLD = (prefix) => {
     layout: "vertical",
     gap: 32,
     padding: 64,
-    fill: "#ffffff",
+    fill: custom?.fill ?? "#ffffff",
     children: [
-      { type: "text", name: "Title", content: title, fontSize: 40, fontWeight: "700" },
+      { type: "text", name: "Title", content: title, fontSize: 40, fontWeight: "700", ...text },
       {
         type: "frame",
         name: "Components",
@@ -165,7 +166,7 @@ if (isMain(import.meta.url)) {
     mkdirSync(dirname(pen), { recursive: true });
     const [command, ...prefixArgs] = (process.env.PEN_SYNC_PEN ?? "pen").split(" ");
     const run = spawnSync(command, [...prefixArgs, "interactive", "-o", pen], {
-      input: `execute(${JSON.stringify({ input: SCAFFOLD(config.metadataPrefix ?? prefix) })})\nsave()\nexit()\n`,
+      input: `execute(${JSON.stringify({ input: SCAFFOLD(config.metadataPrefix ?? prefix, config.boards) })})\nsave()\nexit()\n`,
       encoding: "utf8",
     });
     if (run.error || run.status !== 0 || !existsSync(pen))

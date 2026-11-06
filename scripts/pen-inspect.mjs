@@ -33,7 +33,7 @@ export const INSPECT = (prefix, ids) =>
   `const IDS=${JSON.stringify(ids)};const out={};` +
   `const byId={};Get((n,c)=>{byId[n.id]={n,c};return undefined});` +
   `const lib=(n)=>n.reusable&&/\\nVariant: /.test(n.context||"");` +
-  `const vars=(n)=>[...new Set((JSON.stringify(n).match(/"\\$--[^"]+"/g)||[]).map((v)=>v.slice(2,-1)))].sort();` +
+  `const vars=(n)=>[...new Set((JSON.stringify(n).match(/"\\$[a-zA-Z-][^"]*"/g)||[]).map((v)=>v.slice(2,-1)))].sort();` +
   `for(const id of IDS){const hit=byId[id];if(!hit){out[id]={error:"no such node"};continue}` +
   `let comp=null;for(let p={node:hit.n,parentCtx:hit.c.parentCtx};p&&!comp;p=p.parentCtx)if(lib(p.node))comp=p.node;` +
   `let via=null;if(!comp){for(let p={node:hit.n,parentCtx:hit.c.parentCtx};p&&!comp;p=p.parentCtx){const r=p.node.type==="ref"&&byId[p.node.ref];if(r&&lib(r.n)){comp=r.n;via=p.node.id}}}` +

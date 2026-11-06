@@ -28,7 +28,7 @@ export const LIBRARY = (prefix) =>
   `for(const s of Object.values(out.slots))for(const l of Object.keys(s))s[l]=[...new Set(s[l].map((i)=>names[i]||i))];` +
   `Print(JSON.stringify(out))`;
 
-const LEVELS = ["atom", "molecule", "organism", "template"];
+const LEVELS = config.boards?.levels?.map(([level]) => level) ?? ["atom", "molecule", "organism", "template"];
 
 /** The reference as Markdown: components by level, then token families. */
 export function libraryMarkdown({ registry, inventory, slots = {}, tokens, pen, prefix }) {

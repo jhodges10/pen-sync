@@ -193,3 +193,14 @@ test("turns shadow layers into Pencil effects and reports what they cannot hold"
   assert.deepEqual(lossy, ["--shadow-ring"]);
   assert.deepEqual(themedShadows, ["--shadow-ring"]);
 });
+
+test("a repo with its own space-* scale doesn't get Tailwind's spacing", () => {
+  const doc = (dimension) => ({
+    $extensions: { "pen-sync": { themes: [{ key: "dark", pencil: { mode: "dark" } }], defaultTheme: "dark" } },
+    dimension,
+  });
+  const own = toPencilVariables(doc({ "space-1": { $type: "dimension", $value: "4px" } })).variables;
+  assert.equal(own["space-1"].value, 4);
+  assert.equal(own["--spacing-1"], undefined);
+  assert.ok(toPencilVariables(doc({})).variables["--spacing-1"]);
+});

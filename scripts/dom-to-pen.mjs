@@ -516,11 +516,11 @@ export function variableIndex(
   for (const [name, def] of Object.entries(variables)) {
     if (def.type === "color")
       colors.push({ name, values: perTheme(def.value) });
-    else if (def.type === "number" && name.startsWith("--radius-"))
+    else if (def.type === "number" && /^(--)?radius-/.test(name))
       radii.push([name, perTheme(def.value)[themes[0].key]]);
-    else if (def.type === "number" && name.startsWith("--spacing-"))
+    else if (def.type === "number" && /^(--spacing-|space-)/.test(name))
       spacing.push([name, def.value]);
-    else if (def.type === "string" && name.startsWith("--font-"))
+    else if (def.type === "string" && /^(--)?font-/.test(name))
       fonts[def.value] = name;
   }
   return {

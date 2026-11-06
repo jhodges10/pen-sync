@@ -101,6 +101,38 @@
         }
       }
     },
+    "boards": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "default": null,
+      "description": "The boards `init.mjs` creates, instead of one per atomic level.",
+      "additionalProperties": false,
+      "properties": {
+        "levels": {
+          "type": "array",
+          "description": "`[level, title]` pairs. A registry entry's `level` and a `pen-import` entry's choose among them.",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "fill": {
+          "type": "string",
+          "description": "The boards' background.",
+          "default": "#ffffff"
+        },
+        "text": {
+          "type": "string",
+          "description": "Their titles' color."
+        }
+      }
+    },
     "polishDir": {
       "type": "string",
       "description": "Where polish passes write their PNGs.",

@@ -24,6 +24,12 @@ README has the contract). Ignore the Storybook, `data-ds`, story and `variants.m
 Build whatever the commands run first; a stale binary exports stale components. Add a variant
 where that repo's matrix lives, keep its registry in step, then push as usual.
 
+## Sections that came from a design file
+
+Nodes tagged `<prefix>-design` were copied by `pen-import.mjs` and have no code behind them. Don't
+edit them in the library: edit the source file and re-import. When a component replaces one, take
+it out of the import list. See the README.
+
 ## Prerequisites
 
 - Storybook running (config `storybook`), unless the config has `source`. Don't start a second one; ask.

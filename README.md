@@ -31,6 +31,7 @@ registry + data-ds ─▶ VariantMatrix story ─▶ export (Chromium, every the
 | `pen-sync.mjs` | Export components and push them through the CLI (`--all`, `--changed`, `--tokens`, `--headless`), `--check` (read-only, for CI). |
 | `pen-diff.mjs` | Design → code: what a designer changed, per variant and layer. |
 | `pen-inspect.mjs` | What the selected Pencil nodes are in code. |
+| `pen-import.mjs` | Copy nodes from a design file into the library, for what no code renders yet. |
 | `pen-library.mjs` | The library reference agents read before designing. |
 | `polish-shots.mjs`, `polish-diff.mjs` | Storybook vs Pencil screenshots, ranked. |
 | `variant-usage.mjs` | How often the apps use each variant; unused ones are candidates to delete. |
@@ -119,6 +120,21 @@ A registry entry's `call` (`w.button`) replaces the JSX in its Pencil context, `
 counts toward the source hash, and `variants.mjs` and `variant-usage.mjs` don't apply: the
 source declares its own variants. Without class names, ties between tokens of the same value are
 settled by `aliasOrder` alone, so order it carefully.
+
+## Bringing in what no code renders yet
+
+When the library should hold things with no component behind them yet, `pen-import.mjs` copies
+them from a design file:
+
+```bash
+node $DS/pen-import.mjs --from design/app.pen --list import.json --headless
+```
+
+`import.json` is `[{ id, level, group }]`: a source node, its board and its heading. The script
+follows what those nodes reference (other components and variables), rewrites instances and
+overrides to the new ids, and gives a node that fills its parent a frame of its original size.
+Copies are tagged `<prefix>-design`, a re-import replaces them, and a sync ignores them. Edit
+them in the source file, not the library. `boards` in the config sets the boards `init.mjs` creates.
 
 ## Make a component mirrorable
 

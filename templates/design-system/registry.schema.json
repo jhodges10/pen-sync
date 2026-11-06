@@ -24,7 +24,7 @@
             "type": "string",
             "pattern": "^[A-Z][A-Za-z0-9]*$"
           },
-          "level": { "enum": ["atom", "molecule", "organism", "template"] },
+          "level": { "type": "string", "description": "A board: atom, molecule, organism or template, or one from the config's `boards`." },
           "file": {
             "description": "Source file, relative to packages/components.",
             "type": "string"

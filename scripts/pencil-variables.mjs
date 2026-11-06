@@ -86,7 +86,9 @@ export function toPencilVariables(doc) {
     }
     variables[name] = themed("number", value, perThemeOf(token, px), themes);
   }
-  for (const step of SPACING_STEPS) {
+  // A repo with its own `space-*` scale (no `--`: not CSS) doesn't get Tailwind's.
+  const ownSpacing = Object.keys(doc.dimension ?? {}).some((n) => n.startsWith("space-"));
+  for (const step of ownSpacing ? [] : SPACING_STEPS) {
     variables[`--spacing-${step}`] = { type: "number", value: step * 4 };
   }
   for (const [name, token] of Object.entries(doc.fontFamily ?? {})) {
