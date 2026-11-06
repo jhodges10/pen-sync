@@ -1,3 +1,9 @@
+## v0.4.0 (2026-11-06)
+
+### Feat
+
+- mirror components that don't render in a browser (#1)
+
 ## v0.3.2 (2026-11-03)
 
 ### Fix
