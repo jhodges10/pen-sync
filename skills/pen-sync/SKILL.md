@@ -17,9 +17,16 @@ prefix) live in `pen-sync.config.json` at the repo root.
 when installed as a plugin. Run them from the repo
 root: they find the repo by walking up to `pen-sync.config.json`.
 
+## A repo with `source` in its config
+
+When `pen-sync.config.json` has `source`, components aren't React: commands render them (the
+README has the contract). Ignore the Storybook, `data-ds`, story and `variants.mjs` steps below.
+Build whatever the commands run first; a stale binary exports stale components. Add a variant
+where that repo's matrix lives, keep its registry in step, then push as usual.
+
 ## Prerequisites
 
-- Storybook running (config `storybook`). Don't start a second one; ask.
+- Storybook running (config `storybook`), unless the config has `source`. Don't start a second one; ask.
 - The pen.dev CLI (`pen`) installed and logged in. Pushes go into the **open desktop app** by
   default; `--headless` rewrites the file on disk instead.
 - Scripts that launch Chromium, reach localhost or talk to the CLI run **outside the sandbox**.

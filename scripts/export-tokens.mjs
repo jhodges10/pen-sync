@@ -25,13 +25,11 @@ import {
   toPlainCss,
   typographyRoles,
 } from "./tokens-lib.mjs";
-import { config, packageRoot, repo } from "./config.mjs";
+import { config, packageRoot, repo, source } from "./config.mjs";
+import { runForJson, tokensOf } from "./source-command.mjs";
 
 const OUTPUT = join(repo, config.tokens);
 const SOURCE = join(packageRoot, config.tokenSource);
-
-// Playwright comes from the package `pen-sync.config.json` → playwright names.
-const { chromium } = createRequire(join(repo, config.playwright))("playwright");
 
 /** Runs in the page: classify and resolve every token under the current theme. */
 function resolveInPage({ names, roles, classes }) {
@@ -169,10 +167,22 @@ function normalizeRole(role) {
   };
 }
 
+/** `source.tokens` under each theme: values the command has already resolved. */
+function commandTokens() {
+  const { resolved, roles } = tokensOf(
+    Object.fromEntries(
+      config.themes.map(({ key }) => [key, runForJson(source.tokens, { theme: key }, repo)]),
+    ),
+  );
+  return buildDocument(resolved, roles, config.themes);
+}
+
 async function exportTokens() {
-  const source = inlineImports(SOURCE);
-  const names = exportableNames(source);
-  const roles = typographyRoles(source);
+  // Playwright comes from the package `pen-sync.config.json` → playwright names.
+  const { chromium } = createRequire(join(repo, config.playwright))("playwright");
+  const css = inlineImports(SOURCE);
+  const names = exportableNames(css);
+  const roles = typographyRoles(css);
   const classes = Object.fromEntries(
     roles.map((role) => [role, config.typographyClass.replaceAll("{role}", role)]),
   );
@@ -181,7 +191,7 @@ async function exportTokens() {
   try {
     const page = await browser.newPage();
     await page.setContent(
-      `<!doctype html><html><head><style>${toPlainCss(source)}</style></head>` +
+      `<!doctype html><html><head><style>${toPlainCss(css)}</style></head>` +
         `<body><div id="probe" style="position:absolute;font-size:16px">Ag</div></body></html>`,
     );
     const resolved = {};
@@ -212,7 +222,7 @@ async function exportTokens() {
   }
 }
 
-const tokenDocument = await exportTokens();
+const tokenDocument = source ? commandTokens() : await exportTokens();
 const json = `${JSON.stringify(tokenDocument, null, 2)}\n`;
 
 if (process.argv.includes("--check")) {
@@ -227,7 +237,7 @@ if (process.argv.includes("--check")) {
     process.exit(1);
   }
   console.log(
-    `✓ ${config.tokens} matches ${config.package}/${config.tokenSource}.`,
+    `✓ ${config.tokens} matches ${source ? "source.tokens" : `${config.package}/${config.tokenSource}`}.`,
   );
 } else {
   mkdirSync(dirname(OUTPUT), { recursive: true });

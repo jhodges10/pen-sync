@@ -47,7 +47,7 @@ export function parseContext(context = "") {
   return {
     jsx,
     source,
-    story: story?.replace(/^Storybook: /, ""),
+    story: story?.replace(/^(Storybook|Matrix): /, ""),
     variant: variant?.replace(/^Variant: /, "").replace("(default)", ""),
   };
 }

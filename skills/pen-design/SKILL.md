@@ -55,6 +55,9 @@ size), the code changes and the next sync makes Pencil match it again:
    (`node $DS/pen-sync.mjs <id>`) and diff again; it should report "matches the code".
 4. Changes that apply to every variant usually belong in the base classes; ones on a single
    variant in that variant's cva entry.
+5. With `source` in the config there are no classes: a `$--color-…` variable is a token in that
+   repo's theme and a value is a widget's option. The component's `context` names the call and
+   file to change.
 
 ## Rules
 

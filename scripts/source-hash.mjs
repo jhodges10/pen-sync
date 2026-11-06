@@ -3,7 +3,8 @@
  * a short sha256 over the registry file and the package-local modules it
  * imports, one level deep (button.tsx + lib/button-variants.ts). When it no
  * longer matches, the component's code changed since its Pencil mirror was
- * synced; `pen-sync.mjs --check` recomputes it with this same function. A
+ * synced; `pen-sync.mjs --check` recomputes it with this same function. Zig's
+ * `@import("theme.zig")` counts as an import. A
  * matrix edit in the story doesn't change it: `pen-sync.mjs --changed` catches
  * those by comparing exports.
  *
@@ -20,6 +21,10 @@ import { isMain } from "./main.mjs";
 export function localImports(file, root = packageRoot) {
   const source = readFileSync(join(root, file), "utf8");
   const found = new Set();
+  for (const [, specifier] of source.matchAll(/@import\("([^"]+\.zig)"\)/g)) {
+    const hit = join(dirname(file), specifier);
+    if (hit !== file && existsSync(join(root, hit))) found.add(hit);
+  }
   for (const [, specifier] of source.matchAll(/from\s+"([^"]+)"/g)) {
     const base =
       config.packageName && specifier.startsWith(`${config.packageName}/`)

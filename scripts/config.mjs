@@ -63,6 +63,7 @@ export const DEFAULTS = {
   tokenSource: "src/styles/tokens.css",
   typographyClass: "type-{role}",
   docgen: null,
+  source: null,
   polishDir: join(tmpdir(), "pen-sync-polish"),
   penCommand: "pen",
   usage: ["apps", "src"],
@@ -99,8 +100,13 @@ export const config = loadConfig();
 export const packageRoot = join(repo, config.package);
 export const registryPath = join(packageRoot, config.registry);
 
-/** The themes stories render under (those with Storybook globals). */
-export const storyThemes = config.themes.filter((t) => t.storybook);
+/** Commands that stand in for Storybook and Chromium (`source-command.mjs`), or null. */
+export const source = config.source;
+
+/** The themes components render under: those with Storybook globals, or all of them for a `source`. */
+export const storyThemes = source
+  ? config.themes
+  : config.themes.filter((t) => t.storybook);
 
 /** `{ theme: "dark", brand: "b" }` → `theme:dark;brand:b` for `iframe.html?globals=`. */
 export const globalsParam = (globals) =>

@@ -37,7 +37,8 @@ registry + data-ds ─▶ VariantMatrix story ─▶ export (Chromium, every the
 
 ## Requirements
 
-- **React components with Storybook** (8 or later). Stories render the variant matrix.
+- **React components with Storybook** (8 or later). Stories render the variant matrix. Or,
+  for anything else, [commands that describe your components](#components-that-dont-render-in-a-browser).
 - **The pen.dev CLI**, logged in: `pen interactive` is how everything reaches Pencil. For CI,
   a CLI key in `PEN_CLI_KEY`, and `PEN_SYNC_PEN="bunx @pen.dev/cli@<version>"` if `pen` isn't
   on the runner's PATH.
@@ -91,6 +92,33 @@ scripts/pen-sync variants --check     # = node <plugin>/scripts/variants.mjs --c
 
 `init` writes `pen-sync.config.json`, copies the React kit into the package and creates the
 `.pen` file with a board per level.
+
+## Components that don't render in a browser
+
+A native toolkit has no Storybook, DOM or CSS. Name commands in `source` instead, and everything
+after the snapshot (conversion, binding, push, `--check`, `pen-diff`, polish) runs unchanged:
+
+```json
+"source": {
+  "snapshot": "bin/app --ds-snapshot {id} {theme} {out}",
+  "tokens": "bin/app --ds-tokens {theme} {out}",
+  "shots": "bin/app --ds-shots {id} {theme} {out}"
+}
+```
+
+Each runs from the repo root, without a shell. Playwright and TypeScript aren't needed, and
+`node init.mjs --source` sets a repo up with only the registry.
+
+| Command | Writes to `{out}` |
+| --- | --- |
+| `snapshot` | `{ instances: [{ key, row, tree }], matrix: { rows: [{ vary }], slots }, surfaces }`. A `tree` is what `snapshotMatrix` records: `kind` `element` (box, `direction`, `gap`, `padding`, `justify`, `align`, `bg`, `gradient`, `border`, `radius`, `shadows`, `children`), `text`, or `svg`. An `svg` may give its document as `source` with a tint `color`. Sizing the layout can't show goes in `cls` as class names: `w-full`, `w-fixed`, `flex-1`. Capture animations at their end state. |
+| `tokens` | `{ tokens: { name: { type, value } }, typography }`, values finished: `#rrggbb[aa]`, `6px`. |
+| `shots` | Folder: a 2x PNG per variant, named by `polishName`, plus `storybook.json` (`{ key: { file, width, height, backdrop } }`). |
+
+A registry entry's `call` (`w.button`) replaces the JSX in its Pencil context, `@import("x.zig")`
+counts toward the source hash, and `variants.mjs` and `variant-usage.mjs` don't apply: the
+source declares its own variants. Without class names, ties between tokens of the same value are
+settled by `aliasOrder` alone, so order it carefully.
 
 ## Make a component mirrorable
 

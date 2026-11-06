@@ -34,6 +34,10 @@
             "type": "array",
             "items": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" }
           },
+          "call": {
+            "type": "string",
+            "description": "How code calls a component that isn't written as JSX (`w.button`): the first line of its Pencil context."
+          },
           "selector": {
             "description": "Only for components whose DOM cannot carry data-ds (third-party roots): the CSS selector that finds them instead.",
             "type": "string"
