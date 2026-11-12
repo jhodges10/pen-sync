@@ -66,6 +66,13 @@
       "description": "The class that applies one typography role (a `--type-<role>-size` set in `tokenSource`), with `{role}` for its name. A Tailwind `@utility` counts as a class.",
       "default": "type-{role}"
     },
+    "fonts": {
+      "type": "object",
+      "description": "Font variables a font loader sets outside `tokenSource` (next/font's `variable`, on `<html>`), each mapped to the family the design file knows the face by. The token export defines them so `var(--font-…)` chains resolve, and the component export records that family where the page renders the loader's generated one (`font-3319ae`).",
+      "propertyNames": { "pattern": "^--" },
+      "additionalProperties": { "type": "string" },
+      "default": {}
+    },
     "docgen": {
       "type": [
         "string",

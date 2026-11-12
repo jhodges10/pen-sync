@@ -91,35 +91,53 @@ export function toPencilVariables(doc) {
   for (const step of ownSpacing ? [] : SPACING_STEPS) {
     variables[`--spacing-${step}`] = { type: "number", value: step * 4 };
   }
-  for (const [name, token] of Object.entries(doc.fontFamily ?? {})) {
-    const family = token.$value
+  const family = (list) =>
+    list
       .split(",")[0]
       .trim()
       .replace(/^["']|["']$/g, "");
-    variables[name] = { type: "string", value: family };
+  for (const [name, token] of Object.entries(doc.fontFamily ?? {})) {
+    variables[name] = themed(
+      "string",
+      family(token.$value),
+      perThemeOf(token, family),
+      themes,
+    );
   }
-  for (const [role, token] of Object.entries(doc.typography ?? {})) {
-    const { fontFamily, fontSize, fontWeight, lineHeight, letterSpacing } =
-      token.$value;
+  // A role's parts, from one theme's typography value.
+  const parts = ({ fontFamily, fontSize, fontWeight, lineHeight, letterSpacing }) => {
     const size = px(fontSize);
-    const em = Number.parseFloat(letterSpacing);
-    variables[`--type-${role}-font`] = { type: "string", value: fontFamily };
-    variables[`--type-${role}-size`] = { type: "number", value: size };
-    variables[`--type-${role}-weight`] = {
-      type: "string",
-      value: String(fontWeight),
+    return {
+      font: fontFamily,
+      size,
+      weight: String(fontWeight),
+      leading: lineHeight,
+      // Pencil letter spacing is absolute, so the em tracking is fixed at the role's size.
+      tracking: Math.round(Number.parseFloat(letterSpacing) * size * 100) / 100,
     };
-    if (lineHeight !== "normal") {
-      variables[`--type-${role}-leading`] = {
-        type: "number",
-        value: lineHeight,
-      };
+  };
+  for (const [role, token] of Object.entries(doc.typography ?? {})) {
+    const base = parts(token.$value);
+    const perTheme = perThemeOf(token, parts);
+    const part = (type, key) =>
+      themed(
+        type,
+        base[key],
+        Object.fromEntries(
+          Object.entries(perTheme).map(([theme, p]) => [theme, p[key]]),
+        ),
+        themes,
+      );
+    variables[`--type-${role}-font`] = part("string", "font");
+    variables[`--type-${role}-size`] = part("number", "size");
+    variables[`--type-${role}-weight`] = part("string", "weight");
+    // `normal` has no Pencil number: the leading is only set when every theme gives one.
+    if (
+      [base, ...Object.values(perTheme)].every((p) => p.leading !== "normal")
+    ) {
+      variables[`--type-${role}-leading`] = part("number", "leading");
     }
-    // Pencil letter spacing is absolute, so the em tracking is fixed at the role's size.
-    variables[`--type-${role}-tracking`] = {
-      type: "number",
-      value: Math.round(em * size * 100) / 100,
-    };
+    variables[`--type-${role}-tracking`] = part("number", "tracking");
   }
   for (const group of ["shadow", "string"]) {
     for (const name of Object.keys(doc[group] ?? {})) {

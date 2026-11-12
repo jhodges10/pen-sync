@@ -8,6 +8,7 @@ import { THEMES } from "./test-themes.mjs";
 import {
   buildDocument,
   exportableNames,
+  fontAliasCss,
   inlineImports,
   primaryFamily,
   srgbToHex,
@@ -165,4 +166,13 @@ test("stores per-theme values only for tokens that change across themes", () => 
   assert.equal(doc.$extensions["pen-sync"].defaultTheme, "light/A");
   assert.equal(doc.$extensions["pen-sync"].themes.length, THEMES.length);
   assert.ok(!("string" in doc), "empty groups are omitted");
+});
+
+test("defines a font loader's variables as the families they name", () => {
+  assert.equal(fontAliasCss({}), "");
+  assert.equal(fontAliasCss(), "");
+  assert.equal(
+    fontAliasCss({ "--font-brand": "Brand Sans", "--font-x": 'Q"uote' }),
+    ':root{--font-brand:"Brand Sans";--font-x:"Q\\"uote"}',
+  );
 });

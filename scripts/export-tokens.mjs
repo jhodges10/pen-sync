@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import {
   buildDocument,
   exportableNames,
+  fontAliasCss,
   inlineImports,
   primaryFamily,
   srgbToHex,
@@ -191,7 +192,7 @@ async function exportTokens() {
   try {
     const page = await browser.newPage();
     await page.setContent(
-      `<!doctype html><html><head><style>${toPlainCss(css)}</style></head>` +
+      `<!doctype html><html><head><style>${fontAliasCss(config.fonts)}${toPlainCss(css)}</style></head>` +
         `<body><div id="probe" style="position:absolute;font-size:16px">Ag</div></body></html>`,
     );
     const resolved = {};

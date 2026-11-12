@@ -127,7 +127,11 @@ async function storybookSnapshots() {
         }
         await new Promise((r) => setTimeout(r, 50));
       });
-      snapshots[theme.key] = await page.evaluate(snapshotMatrix, { id, selector });
+      snapshots[theme.key] = await page.evaluate(snapshotMatrix, {
+        id,
+        selector,
+        fontAliases: config.fonts,
+      });
     }
   } finally {
     await browser.close();
