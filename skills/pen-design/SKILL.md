@@ -20,6 +20,15 @@ They drive the pen.dev CLI (`pen`, logged in), connected to the open desktop app
 component by level with its Pencil component names, variant keys, node ids and slots, then the
 token variables. Regenerate it after a sync: `node $DS/pen-library.mjs`.
 
+## Screens that exist in code: export them
+
+When the screen already exists in code and has a story (a page, a tab, a dialog with fixture
+data), don't draw it: `node $DS/export-screen.mjs <story id> --to <app>.pen` renders the story
+and builds the screen from library instances, overriding only what differs. Its summary lists
+elements drawn by hand because no library variant fits; each is a component the library lacks a
+variant for, or one missing from the registry. Export again after the code changes. A screen
+that doesn't render well is fixed in its story or components, not on the canvas.
+
 ## Building a screen
 
 - **Place components, never copies.** Insert a `ref` to the library component's node id and

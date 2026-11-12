@@ -25,9 +25,29 @@ import { colorClassTokens, hexDistance } from "./binding.mjs";
  * story as `{ key, row, tree }`, plus the rows drawn on a brand surface.
  * Self-contained, so Playwright can serialize it.
  */
-export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
+export function snapshotMatrix({
+  id,
+  selector = `[data-ds="${id}"]`,
+  fontAliases = {},
+  screen = null,
+}) {
   const probe = document.createElement("span");
   document.body.appendChild(probe);
+  // A font loader (next/font, Fontsource) names its faces itself (`font-3319ae`)
+  // and hands them over in a CSS variable on <html>; config `fonts` names the
+  // family each variable carries, so a text records that name instead.
+  const unquote = (s) => s.trim().replace(/^["']|["']$/g, "");
+  const loaded = {};
+  const rootStyle = getComputedStyle(document.documentElement);
+  for (const [variable, name] of Object.entries(fontAliases)) {
+    const value = rootStyle.getPropertyValue(variable);
+    if (value.trim()) loaded[unquote(value.split(",")[0])] = name;
+  }
+  const family = (css) =>
+    css
+      .split(",")
+      .map((f) => (loaded[unquote(f)] ? `"${loaded[unquote(f)]}"` : f.trim()))
+      .join(", ");
   const hex = (css) => {
     if (!css || css === "none") return null;
     probe.style.color = "";
@@ -80,7 +100,9 @@ export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
         ...layer.replace(color ?? "", "").matchAll(/-?\d*\.?\d+px/g),
       ].map((m) => px(m[0]));
       const value = hex(color);
-      return value
+      // A layer with no offset, blur or spread draws nothing (a ring at rest:
+      // `0 0 0 0 <ring color>`), whatever its color.
+      return value && lengths.slice(0, 4).some((l) => l !== 0)
         ? [
             {
               color: value,
@@ -180,13 +202,16 @@ export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
       ...box(r, origin),
       opacity: Number(style.opacity),
     };
-    const lucide = [...svg.classList]
-      .find((c) => c.startsWith("lucide-"))
-      ?.slice(7);
+    // Lucide lists an icon's current name, then its older names.
+    const names = [...svg.classList]
+      .filter((c) => c.startsWith("lucide-"))
+      .map((c) => c.slice(7));
+    const lucide = names[0];
     if (lucide) {
       return {
         ...base,
         icon: lucide,
+        ...(names.length > 1 ? { icons: names } : {}),
         color: hex(style.stroke) ?? hex(style.color),
       };
     }
@@ -219,28 +244,79 @@ export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
     const style = getComputedStyle(el);
     const r = el.getBoundingClientRect();
     const children = [];
+    // Consecutive text nodes (`{count} total records` renders two) are one
+    // run. A run beside an inline element keeps the space between them
+    // (`<b>2</b> total records`); at the box's edges it's trimmed.
+    const textRun = (nodes, style) => {
+      // A `<br>` is a line break; other whitespace collapses as the browser does.
+      const BREAK = "\uE000";
+      const textOf = (n) =>
+        n.nodeType === 3
+          ? n.textContent
+          : n.tagName === "BR"
+            ? BREAK
+            : [...n.childNodes].map(textOf).join("");
+      const raw = nodes
+        .map(textOf)
+        .join("")
+        .replace(/\s+/g, " ")
+        .replace(/ ?\uE000 ?/g, "\n");
+      if (!raw.trim()) return null;
+      let content = raw;
+      const [first, last] = [nodes[0], nodes.at(-1)];
+      if (first.previousSibling?.nodeType !== 1) content = content.trimStart();
+      if (last.nextSibling?.nodeType !== 1) content = content.trimEnd();
+      const range = first.ownerDocument.createRange();
+      range.setStartBefore(first);
+      range.setEndAfter(last);
+      return {
+        kind: "text",
+        content,
+        ...box(range.getBoundingClientRect(), origin),
+        color: hex(style.color),
+        font: family(style.fontFamily),
+        size: px(style.fontSize),
+        weight: style.fontWeight,
+        lineHeight: style.lineHeight === "normal" ? null : px(style.lineHeight),
+        letterSpacing:
+          style.letterSpacing === "normal" ? 0 : px(style.letterSpacing),
+        transform: style.textTransform,
+      };
+    };
+    // A paragraph of text and plain inline elements (`Order <b>26025619</b>
+    // is confirmed`) is one text that wraps: Pencil has no inline runs, and
+    // separate runs would each take a line's box and overlap.
+    const plainInline = (node) =>
+      [...node.childNodes].every((c) => {
+        if (c.nodeType !== 1) return true;
+        if (c instanceof SVGElement) return false;
+        const s = getComputedStyle(c);
+        return (
+          s.display === "inline" &&
+          !hex(s.backgroundColor) &&
+          ["Top", "Right", "Bottom", "Left"].every((k) => !px(s[`border${k}Width`])) &&
+          plainInline(c)
+        );
+      });
+    if (
+      !/flex|grid/.test(style.display) &&
+      el.childElementCount > 0 &&
+      [...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim()) &&
+      plainInline(el)
+    ) {
+      const run = textRun([...el.childNodes], style);
+      if (run) children.push(run);
+    }
     // `display: contents` boxes draw nothing; their children belong to `el`.
     const collect = (host, style) => {
-      for (const child of host.childNodes) {
+      const nodes = [...host.childNodes];
+      for (let i = 0; i < nodes.length; i += 1) {
+        const child = nodes[i];
         if (child.nodeType === 3) {
-          const content = child.textContent.replace(/\s+/g, " ").trim();
-          if (!content) continue;
-          const range = document.createRange();
-          range.selectNodeContents(child);
-          children.push({
-            kind: "text",
-            content,
-            ...box(range.getBoundingClientRect(), origin),
-            color: hex(style.color),
-            font: style.fontFamily,
-            size: px(style.fontSize),
-            weight: style.fontWeight,
-            lineHeight:
-              style.lineHeight === "normal" ? null : px(style.lineHeight),
-            letterSpacing:
-              style.letterSpacing === "normal" ? 0 : px(style.letterSpacing),
-            transform: style.textTransform,
-          });
+          const run = [child];
+          while (nodes[i + 1]?.nodeType === 3) run.push(nodes[(i += 1)]);
+          const text = textRun(run, style);
+          if (text) children.push(text);
         } else if (child.nodeType === 1) {
           const childStyle = getComputedStyle(child);
           if (hidden(child, childStyle)) continue;
@@ -256,7 +332,22 @@ export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
         }
       }
     };
-    collect(el, style);
+    if (!children.length) collect(el, style);
+    // A same-origin iframe (an email body) draws its document: its body, placed
+    // where the frame's content box is.
+    if (el.tagName === "IFRAME") {
+      let body = null;
+      try {
+        body = el.contentDocument?.body ?? null;
+      } catch {}
+      if (body) {
+        const inner = {
+          left: origin.left - (r.left + el.clientLeft),
+          top: origin.top - (r.top + el.clientTop),
+        };
+        children.push(elementNode(body, inner));
+      }
+    }
     // A field's value (or, empty, its placeholder) is text the DOM keeps out of
     // its child nodes; it sits in the content box, vertically centred.
     // (A 1px input is a form's hidden mirror of a custom control; skip it.)
@@ -287,7 +378,7 @@ export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
         color: hex(
           el.value ? style.color : getComputedStyle(el, "::placeholder").color,
         ),
-        font: style.fontFamily,
+        font: family(style.fontFamily),
         size: px(style.fontSize),
         weight: style.fontWeight,
         lineHeight: style.lineHeight === "normal" ? null : px(style.lineHeight),
@@ -387,6 +478,18 @@ export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
       kind: "element",
       tag: el.tagName.toLowerCase(),
       slot: el.getAttribute("data-slot"),
+      // A design-system component's root: a screen export makes it an instance.
+      ...(el.hasAttribute("data-ds")
+        ? {
+            ds: el.getAttribute("data-ds"),
+            // Its props as data attributes (`data-variant`, `data-size`): which variant it is.
+            props: Object.fromEntries(
+              [...el.attributes]
+                .filter((a) => a.name.startsWith("data-") && !/^data-(ds|slot)/.test(a.name))
+                .map((a) => [a.name.slice(5), a.value]),
+            ),
+          }
+        : {}),
       cls: el.getAttribute("class") || "",
       ...box(r, origin),
       display: style.display,
@@ -435,6 +538,13 @@ export function snapshotMatrix({ id, selector = `[data-ds="${id}"]` }) {
       ? { ...node, padding: [0, 0, 0, 0], children: [svgNode(el, origin)] }
       : node;
   };
+  // A screen is the story's whole render, one tree.
+  if (screen) {
+    const el = document.querySelector(screen);
+    const tree = el ? rootNode(el) : null;
+    probe.remove();
+    return { screen: tree };
+  }
   // Each instance is the data-ds element inside a matrix's variant wrapper.
   const instances = [...document.querySelectorAll("[data-ds-variant]")].flatMap(
     (wrapper) => {
@@ -512,7 +622,7 @@ export function variableIndex(
   const colors = [];
   const radii = [];
   const spacing = [];
-  const fonts = {};
+  const fonts = [];
   for (const [name, def] of Object.entries(variables)) {
     if (def.type === "color")
       colors.push({ name, values: perTheme(def.value) });
@@ -521,7 +631,7 @@ export function variableIndex(
     else if (def.type === "number" && /^(--spacing-|space-)/.test(name))
       spacing.push([name, def.value]);
     else if (def.type === "string" && /^(--)?font-/.test(name))
-      fonts[def.value] = name;
+      fonts.push({ name, values: perTheme(def.value) });
   }
   return {
     colors,
@@ -561,6 +671,39 @@ export function bindColor(values, hints, index) {
   return { variable: best.name, how: "alias" };
 }
 
+/** First family of a `font-family` list, unquoted — what Pencil takes. */
+const primaryFamily = (css) =>
+  css
+    .split(",")[0]
+    .trim()
+    .replace(/^["']|["']$/g, "");
+
+/**
+ * Bind a text's font, observed per theme (`families[theme]`, a `font-family`
+ * list), to a font variable: one whose family matches in every theme, else one
+ * that matches the first theme's, ranked like colors (config `aliasOrder`, then
+ * by name). With no match, the first theme's family as a literal.
+ */
+export function bindFont(families, index) {
+  const [first] = index.themes;
+  const primary = Object.fromEntries(
+    index.themes.map((t) => [t, primaryFamily(families[t] ?? families[first])]),
+  );
+  const rank = index.aliasRank ?? aliasRanker(DEFAULT_ALIAS_ORDER);
+  const best = (list) =>
+    [...list].sort(
+      (a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name),
+    )[0];
+  const everywhere = index.fonts.filter(({ values }) =>
+    index.themes.every((t) => values[t] === primary[t]),
+  );
+  if (everywhere.length > 0) return `$${best(everywhere).name}`;
+  const firstOnly = index.fonts.filter(
+    ({ values }) => values[first] === primary[first],
+  );
+  return firstOnly.length > 0 ? `$${best(firstOnly).name}` : primary[first];
+}
+
 /**
  * `checked=indeterminate&size=lg` → `Indeterminate / Lg`; no key → `Default`.
  * `qualified` names each non-variant axis (`Tone Muted`), for keys whose short
@@ -598,10 +741,12 @@ const JUSTIFY = {
   center: "center",
   "flex-end": "end",
   end: "end",
+  // Chromium computes `justify-end` as the logical `flow-end`.
+  "flow-end": "end",
   "space-between": "space_between",
   "space-around": "space_around",
 };
-const ALIGN = { center: "center", "flex-end": "end", end: "end" };
+const ALIGN = { center: "center", "flex-end": "end", end: "end", "flow-end": "end" };
 const isFlex = (node) => /flex/.test(node.display);
 const uniform = (list) => list.every((v) => v === list[0]);
 const round = (n) => Math.round(n * 100) / 100;
@@ -659,13 +804,7 @@ export function convertInstance(trees, ctx) {
     family.find(([, v]) => v === value)?.[0]
       ? `$${family.find(([, v]) => v === value)[0]}`
       : value;
-  const font = (family) => {
-    const primary = family
-      .split(",")[0]
-      .trim()
-      .replace(/^["']|["']$/g, "");
-    return index.fonts[primary] ? `$${index.fonts[primary]}` : primary;
-  };
+  const font = (families) => bindFont(families, index);
   const textHints = (ancestors) => {
     for (let i = ancestors.length - 1; i >= 0; i -= 1) {
       const own = colorClassTokens(ancestors[i])
@@ -872,7 +1011,34 @@ export function convertInstance(trees, ctx) {
         }
       : out;
 
-  const convert = (node, path, parent, ancestors) => {
+  // Where each converted node came from, so a screen's instance can convert
+  // what fills its slots (`ctx.instanceOf`).
+  const origins = new WeakMap();
+  const convert = (node, path, parent, ancestors, drawn = false) => {
+    const out = convertNode(node, path, parent, ancestors, drawn);
+    if (out && typeof out === "object") origins.set(out, { node, path, parent, ancestors });
+    return out;
+  };
+  // A design-system component in a screen becomes an instance of its library
+  // component when `ctx.instanceOf` finds one that fits; it is drawn ("tree":
+  // with every layer as the library draws it) for the comparison, and drawn
+  // with its own descendants as instances ("self") when nothing fits.
+  const slotChildren = (layer) => {
+    const from = origins.get(layer);
+    if (!from) return layer.children ?? [];
+    const { node, path, ancestors } = from;
+    return node.children.map((child, i) =>
+      convert(child, [...path, i], node, [...ancestors, node.cls]),
+    );
+  };
+  const convertNode = (node, path, parent, ancestors, drawn) => {
+    if (!drawn && node.kind === "element" && node.ds && ctx.instanceOf) {
+      const plain = convert(node, path, parent, ancestors, "tree");
+      const instance = ctx.instanceOf(node, plain, { slotChildren });
+      if (instance) return instance;
+      return convert(node, path, parent, ancestors, "self");
+    }
+    const below = drawn === "tree" ? "tree" : false;
     const pick = (fn) => (tree) => {
       const n = at(tree, path);
       return n ? fn(n) : null;
@@ -896,7 +1062,14 @@ export function convertInstance(trees, ctx) {
           pick((n) => n.color),
           textHints(ancestors),
         ),
-        fontFamily: font(node.font),
+        fontFamily: font(
+          Object.fromEntries(
+            index.themes.map((t) => [
+              t,
+              pick((n) => n.font)(trees[t]) ?? node.font,
+            ]),
+          ),
+        ),
         fontSize: node.size,
         fontWeight: String(node.weight),
         ...(lineHeight ? { lineHeight } : {}),
@@ -1021,10 +1194,13 @@ export function convertInstance(trees, ctx) {
       : node.radius;
     parents.set(node, parent);
     const children = node.children.flatMap((child, i) => {
-      const converted = convert(child, [...path, i], node, [
-        ...ancestors,
-        node.cls,
-      ]);
+      const converted = convert(
+        child,
+        [...path, i],
+        node,
+        [...ancestors, node.cls],
+        below,
+      );
       return spacerBefore(child, node)
         ? [spacer(node), converted]
         : [converted];

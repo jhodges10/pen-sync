@@ -62,6 +62,7 @@ export const DEFAULTS = {
   tokens: "design/tokens.json",
   tokenSource: "src/styles/tokens.css",
   typographyClass: "type-{role}",
+  fonts: {},
   docgen: null,
   source: null,
   boards: null,

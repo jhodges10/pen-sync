@@ -174,6 +174,33 @@ instance a designer placed to the new component with the same variant key, so th
 keep working. An instance whose variant no longer exists is reported as an orphan, and its
 old section is kept rather than deleted.
 
+## Screens from stories
+
+Any story (a page, a panel, a dialog) can become a screen in an app's design file, built from the
+library's components:
+
+```bash
+node $DS/export-screen.mjs orders-paymentslayout--invoiced --to design/app/orders.pen
+node $DS/export-screen.mjs <story id> --to design/app/orders.pen --headless --width 1440
+node $DS/export-screen.mjs <story id> --json        # the node and its report, nothing pushed
+```
+
+The story renders under every theme, like a matrix. Each element with `data-ds` becomes an
+instance of that component's closest library variant: its data attributes (`data-variant`,
+`data-size`) pick among the variants, and the one needing the fewest overrides wins, a restyled
+paint counting more than a size or a label. What differs is overridden by layer, a layer the
+element lacks is hidden, and a slot takes the element's content, whose own components become
+instances too. An element no variant fits is drawn, and the summary lists those by component.
+Everything else is drawn as a synced component's layers are, bound to the token variables.
+
+The target file imports the library (a headless run adds the import) and gets the token
+variables. Exporting a story again replaces its screen in place (`<prefix>-screen` metadata);
+a new one goes to the right of the last. Icons use a name the running Pencil knows: Lucide keeps
+renamed icons' old names as aliases, and each is checked in Pencil once.
+
+A screen is a picture of the code: change it by changing the story or the components, then
+export it again.
+
 ## How it works
 
 - **Export:** headless Chromium renders the VariantMatrix story under every theme, snapshots
@@ -181,6 +208,12 @@ old section is kept rather than deleted.
   `ml-auto` a fill, and wrapping rows become lines. Each paint binds to the token variable that
   matches it in every theme, with the element's classes breaking ties. Variants share a base
   component and override only what differs.
+- **Fonts:** a text binds to the font variable whose family matches in every theme. A font
+  loader that generates face names (next/font's `font-3319ae`) and passes them in a CSS
+  variable needs config `fonts`, mapping each variable to the family the design file knows
+  (`{ "--font-brand": "Brand Sans" }`). The token export then resolves `var(--font-brand)`
+  chains, and the component export records `Brand Sans` where the page drew the generated
+  face. The design file still needs those faces in its own fonts.
 - **Push:** `pen-sync.mjs` drives `pen interactive`, connected to the desktop app (`-a
   desktop`) or headless on the file. It stores the apply step once and sends one `execute`
   per component.

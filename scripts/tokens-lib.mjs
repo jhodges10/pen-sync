@@ -207,3 +207,14 @@ export function buildDocument(resolved, roles, themes) {
     ),
   };
 }
+
+/**
+ * The font loader's variables (config `fonts`), defined as the family each one
+ * names. The loader sets them outside the token source (next/font puts them on
+ * `<html>`), so without them every `var(--font-…)` chain resolves to nothing.
+ */
+export function fontAliasCss(fonts = {}) {
+  const entries = Object.entries(fonts);
+  if (entries.length === 0) return "";
+  return `:root{${entries.map(([name, family]) => `${name}:${JSON.stringify(family)}`).join(";")}}`;
+}

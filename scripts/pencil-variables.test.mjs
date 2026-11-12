@@ -204,3 +204,48 @@ test("a repo with its own space-* scale doesn't get Tailwind's spacing", () => {
   assert.equal(own["--spacing-1"], undefined);
   assert.ok(toPencilVariables(doc({})).variables["--spacing-1"]);
 });
+
+test("themes a font that changes family, and each part of a role that changes", () => {
+  const doc = build(
+    {
+      "--font-heading": {
+        type: "fontFamily",
+        values: { ...all('"Goudy", Georgia, serif'), "light/B": '"Figtree", Arial' },
+      },
+    },
+    {
+      page: {
+        ...all({
+          fontFamily: "Goudy",
+          fontSize: "32px",
+          fontWeight: 400,
+          lineHeight: 1.1,
+          letterSpacing: "0em",
+          textTransform: "none",
+        }),
+        "light/B": {
+          fontFamily: "Figtree",
+          fontSize: "28px",
+          fontWeight: 700,
+          lineHeight: "normal",
+          letterSpacing: "0em",
+          textTransform: "none",
+        },
+      },
+    },
+  );
+  const { variables } = toPencilVariables(doc);
+  const valueIn = (name, key) =>
+    variables[name].value.find(
+      ({ theme }) => JSON.stringify(theme) === JSON.stringify(THEMES.find((t) => t.key === key).pencil),
+    ).value;
+  assert.equal(valueIn("--font-heading", "dark/A"), "Goudy");
+  assert.equal(valueIn("--font-heading", "light/B"), "Figtree");
+  assert.equal(valueIn("--type-page-font", "light/B"), "Figtree");
+  assert.equal(valueIn("--type-page-size", "light/B"), 28);
+  assert.equal(valueIn("--type-page-weight", "dark/A"), "400");
+  // One theme's leading is `normal`, which Pencil has no number for.
+  assert.equal(variables["--type-page-leading"], undefined);
+  // A part no theme changes stays a plain value.
+  assert.deepEqual(variables["--type-page-tracking"], { type: "number", value: 0 });
+});

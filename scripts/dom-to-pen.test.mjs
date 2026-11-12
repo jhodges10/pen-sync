@@ -4,6 +4,7 @@ import { describe, test } from "node:test";
 import {
   asVariant,
   bindColor,
+  bindFont,
   caption,
   codeLink,
   contextKey,
@@ -1062,4 +1063,62 @@ test("a translated child (a checked switch's thumb) keeps its drawn position", (
   const [thumb] = convertInstance({ "light/A": track }, ctx).children;
   assert.equal(thumb.layoutPosition, "absolute");
   assert.equal(thumb.x, 22);
+});
+
+describe("bindFont", () => {
+  const STORES = [
+    { key: "hodges", pencil: { store: "hodges" } },
+    { key: "iar", pencil: { store: "iar" } },
+  ];
+  const store = (hodges, iar) => ({
+    type: "string",
+    value: [
+      { value: hodges, theme: { store: "hodges" } },
+      { value: iar, theme: { store: "iar" } },
+    ],
+  });
+  const fonts = variableIndex(
+    {
+      "--font-sans": store("system-ui", "Figtree"),
+      "--font-body": store("system-ui", "Figtree"),
+      "--font-heading": store("hodgesGoudy", "Figtree"),
+      "--font-serif": store("hodgesGoudy", "Figtree"),
+      "--font-display": store("hodgesFranklin", "Figtree"),
+      "--font-mono": { type: "string", value: "JetBrains Mono" },
+    },
+    STORES,
+  );
+
+  test("binds the variable whose family matches in every theme", () => {
+    assert.equal(
+      bindFont(
+        { hodges: '"hodgesFranklin", Impact, sans-serif', iar: '"Figtree", Arial' },
+        fonts,
+      ),
+      "$--font-display",
+    );
+    assert.equal(
+      bindFont({ hodges: "JetBrains Mono", iar: "JetBrains Mono" }, fonts),
+      "$--font-mono",
+    );
+  });
+
+  test("breaks a tie between equal variables by rank, then name", () => {
+    assert.equal(
+      bindFont({ hodges: "hodgesGoudy, serif", iar: "Figtree" }, fonts),
+      "$--font-heading",
+    );
+  });
+
+  test("falls back to a first-theme match, then to the family itself", () => {
+    // A face only one theme swaps in (an inline style) still binds by the first theme.
+    assert.equal(
+      bindFont({ hodges: "hodgesFranklin", iar: "Arial" }, fonts),
+      "$--font-display",
+    );
+    assert.equal(
+      bindFont({ hodges: '"Courier New", monospace', iar: "Courier New" }, fonts),
+      "Courier New",
+    );
+  });
 });
