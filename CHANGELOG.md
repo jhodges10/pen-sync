@@ -1,3 +1,9 @@
+## v0.5.0 (2026-11-12)
+
+### Feat
+
+- export stories as screens built from library instances (#2)
+
 ## v0.4.0 (2026-11-06)
 
 ### Feat
